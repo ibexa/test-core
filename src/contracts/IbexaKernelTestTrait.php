@@ -20,6 +20,7 @@ use Ibexa\Contracts\Core\Repository\RoleService;
 use Ibexa\Contracts\Core\Repository\SearchService;
 use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserService;
+use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Core\Repository\Values\User\UserReference;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
@@ -90,11 +91,11 @@ trait IbexaKernelTestTrait
     protected static function getTestServiceId(?string $id, string $className): string
     {
         $kernel = self::$kernel;
-        if (!$kernel instanceof IbexaTestKernel) {
+        if (!$kernel instanceof IbexaTestKernelInterface) {
             throw new RuntimeException(sprintf(
                 'Expected %s to be an instance of %s.',
                 get_class($kernel),
-                IbexaTestKernel::class,
+                IbexaTestKernelInterface::class,
             ));
         }
 
