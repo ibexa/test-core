@@ -1,0 +1,57 @@
+{
+  "name": "ibexa/test-core",
+  "license": "proprietary",
+  "type": "ibexa-bundle",
+  "keywords": [
+    "ibexa-dxp"
+  ],
+  "require": {
+    "php": "^7.4 || ^8.0",
+    "doctrine/dbal": "^2.13.0",
+    "symfony/framework-bundle": "^5.4",
+    "symfony/yaml": "^5.4"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9",
+    "ibexa/code-style": "^1.1",
+    "ibexa/core": "~4.4.x-dev",
+    "ibexa/doctrine-schema": "~4.4.x-dev",
+    "phpstan/phpstan": "^1.2",
+    "phpstan/phpstan-phpunit": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Ibexa\\Bundle\\Test\\Core\\": "src/bundle/",
+      "Ibexa\\Contracts\\Test\\Core\\": "src/contracts/",
+      "Ibexa\\Test\\Core\\": "src/lib/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Ibexa\\Tests\\Bundle\\Test\\Core\\": "tests/bundle/",
+      "Ibexa\\Tests\\Integration\\Test\\Core\\": "tests/integration/",
+      "Ibexa\\Tests\\Test\\Core\\": "tests/lib/"
+    }
+  },
+  "scripts": {
+    "fix-cs": "php-cs-fixer fix --config=.php-cs-fixer.php --show-progress=dots",
+    "check-cs": "@fix-cs --dry-run",
+    "test": "phpunit -c phpunit.xml.dist",
+    "phpstan": "phpstan analyse -c phpstan.neon"
+  },
+  "scripts-descriptions": {
+    "fix-cs": "Automatically fixes code style in all files",
+    "check-cs": "Run code style checker for all files",
+    "test": "Run automatic tests",
+    "phpstan": "Run static code analysis"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "0.1.x-dev"
+    }
+  },
+  "config": {
+    "allow-plugins": false,
+    "sort-packages": true
+  }
+}
