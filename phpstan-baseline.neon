@@ -1,0 +1,21 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Call to an undefined method Symfony\\\\Component\\\\HttpKernel\\\\KernelInterface\\:\\:getFixtures\\(\\)\\.$#"
+			count: 1
+			path: src/contracts/IbexaKernelTestCase.php
+
+		-
+			message: "#^Call to an undefined method Symfony\\\\Component\\\\HttpKernel\\\\KernelInterface\\:\\:getSchemaFiles\\(\\)\\.$#"
+			count: 1
+			path: src/contracts/IbexaKernelTestCase.php
+
+		-
+			message: "#^Cannot call method import\\(\\) on object\\|null\\.$#"
+			count: 1
+			path: src/contracts/IbexaKernelTestCase.php
+
+		-
+			message: "#^Cannot call method importSchema\\(\\) on object\\|null\\.$#"
+			count: 1
+			path: src/contracts/IbexaKernelTestCase.php
