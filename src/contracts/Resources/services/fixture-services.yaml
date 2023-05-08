@@ -8,7 +8,7 @@ services:
         arguments:
             - '@doctrine.dbal.default_connection'
 
-    Ibexa\Contracts\Test\Core\Persistence\Fixture\FixtureImporter:
+    Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter:
         alias: 'test.ibexa.fixture_importer'
 
     test.ibexa.fixture_importer:
