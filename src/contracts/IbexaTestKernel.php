@@ -41,7 +41,7 @@ use Symfony\Component\HttpKernel\Kernel;
  * ## Configuring the kernel
  *
  * It automatically exposes all Repository-based services for consumption in tests (marking them as public prevents
- * them from being removed from test container). A minimal configuration Symfony framework configuration is provided,
+ * them from being removed from test container). A minimal Symfony framework configuration is provided,
  * along with Doctrine connection.
  *
  * To supply a different configuration, extend IbexaTestKernel::loadConfiguration() method.
