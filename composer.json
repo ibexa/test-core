@@ -9,6 +9,10 @@
     "php": "^7.4 || ^8.0",
     "doctrine/dbal": "^2.13.0",
     "symfony/framework-bundle": "^5.4",
+     "symfony/mime": "^5.4",
+    "symfony/proxy-manager-bridge": "^5.4",
+    "symfony/translation": "^5.4",
+    "symfony/validator": "^5.4",
     "symfony/yaml": "^5.4"
   },
   "require-dev": {
