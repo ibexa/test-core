@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core;
 
+use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -16,7 +17,16 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  */
 abstract class IbexaKernelTestCase extends KernelTestCase
 {
-    use IbexaKernelTestTrait;
+    protected IbexaTestCoreInterface $ibexaCore;
+
+    protected function setUp(): void
+    {
+        $kernel = self::bootKernel();
+        /** @var \Symfony\Component\DependencyInjection\ContainerInterface $container */
+        $container = static::$kernel->getContainer()->get('test.service_container');
+        self::assertInstanceOf(IbexaTestKernelInterface::class, $kernel);
+        $this->ibexaCore = new IbexaTestCore($container, $kernel);
+    }
 
     protected static function getKernelClass(): string
     {
