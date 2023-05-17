@@ -95,20 +95,20 @@ final class IbexaTestCore implements IbexaTestCoreInterface
      *
      * @return T
      */
-    public function getServiceByClassName(string $className, ?string $id = null): object
+    public function getServiceByClassName(string $className, ?string $id = null, bool $prefix = true): object
     {
-        $serviceId = $this->getTestServiceId($id, $className);
+        $serviceId = $this->getTestServiceId($id, $className, $prefix);
         $service = $this->container->get($serviceId);
         assert(is_object($service) && is_a($service, $className));
 
         return $service;
     }
 
-    private function getTestServiceId(?string $id, string $className): string
+    private function getTestServiceId(?string $id, string $className, bool $prefix): string
     {
         $id = $id ?? $className;
 
-        return $this->kernel::getAliasServiceId($id);
+        return $prefix ? $this->kernel::getAliasServiceId($id) : $id;
     }
 
     public function getDoctrineConnection(): Connection

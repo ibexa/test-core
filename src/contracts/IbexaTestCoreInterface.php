@@ -46,7 +46,7 @@ interface IbexaTestCoreInterface
      *
      * @return T
      */
-    public function getServiceByClassName(string $className, ?string $id = null): object;
+    public function getServiceByClassName(string $className, ?string $id = null, bool $prefix = true): object;
 
     public function getDoctrineConnection(): Connection;
 
