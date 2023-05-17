@@ -13,7 +13,8 @@ use Ibexa\DoctrineSchema\Database\DbPlatform\SqliteDbPlatform;
 use RuntimeException;
 
 return static function (ContainerConfigurator $container): void {
-    $_SERVER['DATABASE_URL'] ??= $_ENV['DATABASE_URL'] ??= 'sqlite://:memory:';
+    $_ENV['DATABASE_URL'] ??= 'sqlite://:memory:';
+    $container->parameters()->set('env(DATABASE_URL)', $_ENV['DATABASE_URL']);
 
     $platformsMap = [
         'sqlite' => SqliteDbPlatform::class,
