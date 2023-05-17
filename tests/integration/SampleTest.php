@@ -19,6 +19,8 @@ final class SampleTest extends IbexaKernelTestCase
 {
     public function testCompilesSuccessfully(): void
     {
-        // do nothing, container compiled via setUp() call
+        self::bootKernel();
+
+        $this->expectNotToPerformAssertions();
     }
 }
