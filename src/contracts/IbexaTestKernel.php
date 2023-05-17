@@ -213,16 +213,6 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
 
     private static function prepareIOServices(ContainerBuilder $container): void
     {
-        if (!class_exists(InMemoryFilesystemAdapter::class)) {
-            throw new LogicException(
-                sprintf(
-                    'Missing %s class. Ensure that %s package is installed as a dev dependency',
-                    InMemoryFilesystemAdapter::class,
-                    'league/flysystem-memory',
-                )
-            );
-        }
-
         $container->setParameter('webroot_dir', dirname(__DIR__, 3) . '/var/public');
         $inMemoryAdapter = new Definition(InMemoryFilesystemAdapter::class);
         $container->setDefinition(InMemoryFilesystemAdapter::class, $inMemoryAdapter);
