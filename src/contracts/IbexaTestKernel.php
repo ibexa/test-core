@@ -169,7 +169,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     protected function loadConfiguration(LoaderInterface $loader): void
     {
         $loader->load(self::getResourcesPath() . '/config/doctrine.php');
-        $loader->load(self::getResourcesPath() . '/config/ezpublish.yaml');
+        $loader->load(self::getResourcesPath() . '/config/ibexa.yaml');
         $loader->load(self::getResourcesPath() . '/config/framework.yaml');
         $this->loadSecurity($loader);
     }
