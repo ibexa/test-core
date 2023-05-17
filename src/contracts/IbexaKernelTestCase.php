@@ -17,16 +17,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  */
 abstract class IbexaKernelTestCase extends KernelTestCase
 {
-    protected IbexaTestCoreInterface $ibexaCore;
-
-    protected function setUp(): void
-    {
-        $kernel = self::bootKernel();
-        /** @var \Symfony\Component\DependencyInjection\ContainerInterface $container */
-        $container = static::$kernel->getContainer()->get('test.service_container');
-        self::assertInstanceOf(IbexaTestKernelInterface::class, $kernel);
-        $this->ibexaCore = new IbexaTestCore($container, $kernel);
-    }
+    private IbexaTestCoreInterface $ibexaCore;
 
     protected static function getKernelClass(): string
     {
@@ -35,5 +26,26 @@ abstract class IbexaKernelTestCase extends KernelTestCase
         } catch (LogicException $e) {
             return IbexaTestKernel::class;
         }
+    }
+
+    protected function getIbexaTestCore(): IbexaTestCoreInterface
+    {
+        if (!self::$booted) {
+            self::bootKernel();
+        }
+
+        if (!isset($this->ibexaCore)) {
+            if (!self::$kernel instanceof IbexaTestKernelInterface) {
+                throw new \LogicException(sprintf(
+                    '%s requires %s as an argument, but received %s. Ensure that KERNEL_CLASS env variable is set properly.',
+                    IbexaTestCore::class,
+                    IbexaTestKernelInterface::class,
+                    get_debug_type(self::$kernel),
+                ));
+            }
+            $this->ibexaCore = new IbexaTestCore(self::getContainer(), self::$kernel);
+        }
+
+        return $this->ibexaCore;
     }
 }
