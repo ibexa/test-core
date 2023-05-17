@@ -64,11 +64,12 @@ use Symfony\Component\HttpKernel\Kernel;
  * IbexaTestKernel::getExposedServicesByClass() is a simpler variant provided for services that are registered in
  * service container using their FQCN.
  *
- * IbexaTestKernel::getExposedServicesById() is useful if your service is not registered as it's FQCN (for example,
+ * IbexaTestKernel::getExposedServicesById() is useful if your service is not registered as its FQCN (for example,
  * if you have multiple services for the same class / interface).
  *
- * If don't need the repository services (or not all), you can replace the IbexaTestKernel::EXPOSED_SERVICES_BY_CLASS and
- * IbexaTestKernel::EXPOSED_SERVICES_BY_ID consts in extending class, without changing the methods above.
+ * If you don't need the repository services (or not all of them), you can replace
+ * the IbexaTestKernel::EXPOSED_SERVICES_BY_CLASS and IbexaTestKernel::EXPOSED_SERVICES_BY_ID constants
+ * in the extending class, without changing the methods above.
  */
 class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
 {
