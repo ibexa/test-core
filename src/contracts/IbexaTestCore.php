@@ -28,6 +28,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @experimental
+ *
  * @internal use IbexaTestCoreInterface instead.
  *
  * @see \Ibexa\Contracts\Test\Core\IbexaTestCoreInterface
