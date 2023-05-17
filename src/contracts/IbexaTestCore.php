@@ -75,7 +75,9 @@ final class IbexaTestCore implements IbexaTestCoreInterface
             $fixtureImporter->import($fixture);
         }
 
-        null === $postLoadFixtures || $postLoadFixtures();
+        if (null !== $postLoadFixtures) {
+            $postLoadFixtures();
+        }
     }
 
     /**
