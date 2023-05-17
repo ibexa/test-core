@@ -23,4 +23,4 @@ services:
 
     Ibexa\DoctrineSchema\Database\DbPlatform\PostgreSqlDbPlatform:
         calls:
-            - [ setEventManager, [ '@doctrine.dbal.default_connection.event_manager' ] ]
+            - [setEventManager, ['@doctrine.dbal.default_connection.event_manager']]
