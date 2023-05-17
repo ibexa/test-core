@@ -6,7 +6,7 @@ services:
         class: Ibexa\Tests\Core\Repository\LegacySchemaImporter
         public: true
         arguments:
-            - '@doctrine.dbal.default_connection'
+            $connection: '@ibexa.persistence.connection'
 
     Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter:
         alias: 'test.ibexa.fixture_importer'
@@ -15,7 +15,7 @@ services:
         class: Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter
         public: true
         arguments:
-            - '@doctrine.dbal.default_connection'
+            $connection: '@ibexa.persistence.connection'
 
     Ibexa\DoctrineSchema\Database\DbPlatform\SqliteDbPlatform:
         calls:
