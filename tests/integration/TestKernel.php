@@ -6,10 +6,10 @@
  */
 declare(strict_types=1);
 
-namespace Ibexa\Bundle\Test\Core;
+namespace Ibexa\Tests\Integration\Test\Core;
 
-use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 
-final class IbexaTestCoreBundle extends Bundle
+final class TestKernel extends IbexaTestKernel
 {
 }
