@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Exception\OutOfBoundsException;
 use Symfony\Component\DependencyInjection\Reference;
 
-class PersistenceCheckCompilerPass implements CompilerPassInterface
+final class PersistenceCheckCompilerPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
