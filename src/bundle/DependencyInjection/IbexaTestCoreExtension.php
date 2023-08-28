@@ -8,9 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Bundle\Test\Core\DependencyInjection;
 
-use Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass\PersistenceCheckCompilerPass;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -30,7 +28,5 @@ final class IbexaTestCoreExtension extends Extension
         );
 
         $loader->load('services.yaml');
-
-        $container->addCompilerPass(new PersistenceCheckCompilerPass(), PassConfig::TYPE_AFTER_REMOVING);
     }
 }
