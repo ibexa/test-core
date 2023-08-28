@@ -8,8 +8,15 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Integration\Test\Core;
 
+use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 
 final class TestKernel extends IbexaTestKernel
 {
+    public function registerBundles(): iterable
+    {
+        yield from parent::registerBundles();
+
+        yield new IbexaTestCoreBundle();
+    }
 }
