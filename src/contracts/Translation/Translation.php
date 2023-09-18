@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @copyright Copyright (C) Ibexa AS. All rights reserved.
+ * @license For full copyright and license information view LICENSE file distributed with this source code.
+ */
+declare(strict_types=1);
+
 namespace Ibexa\Contracts\Test\Core\Translation;
 
 use JMS\TranslationBundle\Translation\Comparison\ChangeSet;
@@ -75,7 +81,7 @@ final class Translation
 
         $this->twigEnvironment->registerUndefinedFunctionCallback(function (string $name): ?TwigFunction {
             if ($this->functions === null || in_array($name, $this->functions, true)) {
-                return new TwigFunction($name, static fn(): string => '');
+                return new TwigFunction($name, static fn (): string => '');
             }
 
             return null;
@@ -83,7 +89,7 @@ final class Translation
 
         $this->twigEnvironment->registerUndefinedFilterCallback(function (string $name): ?TwigFilter {
             if ($this->filters === null || in_array($name, $this->filters, true)) {
-                return new TwigFilter($name, static fn($value) => $value);
+                return new TwigFilter($name, static fn ($value) => $value);
             }
 
             return null;
