@@ -62,7 +62,7 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
             throw new \LogicException(sprintf(
                 'Invalid service acquired. Expected %s, received %s.',
                 Translation::class,
-                get_class($service),
+                get_debug_type($service),
             ));
         }
 
