@@ -12,8 +12,7 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
     final public function testTranslation(): void
     {
         $facade = $this->getTranslationService();
-        $changeset = $facade->getChangeSet('ibexa_activity_log');
-        $facade->process('ibexa_activity_log');
+        $changeset = $facade->getChangeSet($this->getConfigName());
 
         $addedMessages = $changeset->getAddedMessages();
         $deletedMessages = $changeset->getDeletedMessages();
