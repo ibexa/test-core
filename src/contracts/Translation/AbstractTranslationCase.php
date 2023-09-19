@@ -14,12 +14,18 @@ use LogicException;
 
 abstract class AbstractTranslationCase extends IbexaKernelTestCase
 {
-    abstract protected function getConfigName(): string;
+    /**
+     * @return iterable<array{string}>
+     */
+    abstract protected function provideConfigNamesForTranslation(): iterable;
 
-    final public function testTranslation(): void
+    /**
+     * @dataProvider provideConfigNamesForTranslation
+     */
+    final public function testTranslation(string $configName): void
     {
         $facade = $this->getTranslationService();
-        $changeset = $facade->getChangeSet($this->getConfigName());
+        $changeset = $facade->getChangeSet($configName);
 
         $addedMessages = $changeset->getAddedMessages();
         $deletedMessages = $changeset->getDeletedMessages();
