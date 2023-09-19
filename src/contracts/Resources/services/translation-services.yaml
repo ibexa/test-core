@@ -1,0 +1,7 @@
+services:
+    Ibexa\Contracts\Test\Core\Translation\TranslationService:
+        public: true
+        arguments:
+            $configFactory: '@jms_translation.config_factory'
+            $updater: '@jms_translation.updater'
+            $twigEnvironment: '@twig'

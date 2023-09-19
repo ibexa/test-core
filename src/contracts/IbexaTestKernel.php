@@ -180,6 +180,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     protected function loadServices(LoaderInterface $loader): void
     {
         $loader->load(self::getResourcesPath() . '/services/fixture-services.yaml');
+        $loader->load(self::getResourcesPath() . '/services/translation-services.yaml');
     }
 
     /**
