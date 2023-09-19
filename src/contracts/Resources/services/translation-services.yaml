@@ -1,5 +1,5 @@
 services:
-    Ibexa\Contracts\Test\Core\Translation\Translation:
+    Ibexa\Contracts\Test\Core\Translation\TranslationService:
         public: true
         arguments:
             $configFactory: '@jms_translation.config_factory'

@@ -15,7 +15,7 @@ use Twig\Environment;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
-final class Translation
+final class TranslationService
 {
     private ConfigFactory $configFactory;
 

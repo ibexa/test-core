@@ -10,6 +10,7 @@ namespace Ibexa\Contracts\Test\Core\Translation;
 
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 use JMS\TranslationBundle\Model\Message;
+use LogicException;
 
 abstract class AbstractTranslationCase extends IbexaKernelTestCase
 {
@@ -61,13 +62,13 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
         self::assertCount(0, array_merge($addedMessages, $deletedMessages), $message);
     }
 
-    private function getTranslationService(): Translation
+    private function getTranslationService(): TranslationService
     {
-        $service = self::getContainer()->get(Translation::class);
-        if (!$service instanceof Translation) {
-            throw new \LogicException(sprintf(
+        $service = self::getContainer()->get(TranslationService::class);
+        if (!$service instanceof TranslationService) {
+            throw new LogicException(sprintf(
                 'Invalid service acquired. Expected %s, received %s.',
-                Translation::class,
+                TranslationService::class,
                 get_debug_type($service),
             ));
         }
