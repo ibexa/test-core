@@ -17,7 +17,7 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
     /**
      * @return iterable<array{string}>
      */
-    abstract public function provideConfigNamesForTranslation(): iterable;
+    abstract public static function provideConfigNamesForTranslation(): iterable;
 
     /**
      * @dataProvider provideConfigNamesForTranslation
