@@ -19,6 +19,7 @@ use Ibexa\Contracts\Core\Repository\PermissionResolver;
 use Ibexa\Contracts\Core\Repository\RoleService;
 use Ibexa\Contracts\Core\Repository\SearchService;
 use Ibexa\Contracts\Core\Repository\SectionService;
+use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
 
 /**
@@ -71,6 +72,8 @@ interface IbexaTestCoreInterface
     public function getLanguageService(): LanguageService;
 
     public function getSectionService(): SectionService;
+
+    public function getUserPreferenceService(): UserPreferenceService;
 
     public function setAnonymousUser(): void;
 

@@ -19,6 +19,7 @@ use Ibexa\Contracts\Core\Repository\PermissionResolver;
 use Ibexa\Contracts\Core\Repository\RoleService;
 use Ibexa\Contracts\Core\Repository\SearchService;
 use Ibexa\Contracts\Core\Repository\SectionService;
+use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
@@ -169,6 +170,11 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     public function getSectionService(): SectionService
     {
         return $this->getServiceByClassName(SectionService::class);
+    }
+
+    public function getUserPreferenceService(): UserPreferenceService
+    {
+        return $this->getServiceByClassName(UserPreferenceService::class);
     }
 
     public function setAnonymousUser(): void
