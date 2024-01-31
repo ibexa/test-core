@@ -151,6 +151,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     public function registerContainerConfiguration(LoaderInterface $loader): void
     {
         $loader->load(static function (ContainerBuilder $container): void {
+            self::setTwigDefaultPath($container);
             $container->setParameter('ibexa.core.test.resource_dir', self::getResourcesPath());
         });
 
@@ -278,5 +279,14 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
         $definition = new Definition($class);
         $definition->setSynthetic(true);
         $container->setDefinition($id, $definition);
+    }
+
+    protected static function setTwigDefaultPath(ContainerBuilder $container): void
+    {
+        $kernelProjectDir = $container->getParameter('kernel.project_dir');
+        if (!is_string($kernelProjectDir)) {
+            throw new LogicException('%kernel.project_dir% container parameter needs to be a string');
+        }
+        $container->setParameter('twig.default_path', $kernelProjectDir . '/var/templates');
     }
 }
