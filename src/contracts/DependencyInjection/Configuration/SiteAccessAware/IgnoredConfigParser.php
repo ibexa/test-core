@@ -23,7 +23,7 @@ final class IgnoredConfigParser extends AbstractParser
     /**
      * @param string[] $keys
      */
-    public function __construct(array $keys)
+    public function __construct(string ...$keys)
     {
         $this->keys = $keys;
     }
