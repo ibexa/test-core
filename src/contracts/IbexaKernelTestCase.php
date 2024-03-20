@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace Ibexa\Contracts\Test\Core;
 
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use LogicException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -18,15 +17,6 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 abstract class IbexaKernelTestCase extends KernelTestCase
 {
     private IbexaTestCoreInterface $ibexaCore;
-
-    protected static function getKernelClass(): string
-    {
-        try {
-            return parent::getKernelClass();
-        } catch (LogicException $e) {
-            return IbexaTestKernel::class;
-        }
-    }
 
     protected function getIbexaTestCore(): IbexaTestCoreInterface
     {
