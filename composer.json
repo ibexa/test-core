@@ -6,7 +6,7 @@
         "ibexa-dxp"
     ],
     "require": {
-        "php": "^7.4 || ^8.0",
+        "php": ">=8.3",
         "doctrine/dbal": "^2.13.0",
         "symfony/framework-bundle": "^5.4",
         "symfony/mime": "^5.4",
