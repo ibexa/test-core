@@ -20,6 +20,7 @@
         "ibexa/code-style": "^1.1",
         "ibexa/core": "~5.0.x-dev",
         "ibexa/doctrine-schema": "~5.0.x-dev",
+        "ibexa/rector": "~5.0.x-dev",
         "phpstan/phpstan": "^1.2",
         "phpstan/phpstan-phpunit": "^1.0"
     },
