@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Ibexa\Contracts\Test\Core\Translation;
 
 use JMS\TranslationBundle\Translation\Comparison\ChangeSet;
+use JMS\TranslationBundle\Translation\Config;
 use JMS\TranslationBundle\Translation\ConfigFactory;
 use JMS\TranslationBundle\Translation\Updater;
 use Twig\Environment;
@@ -63,7 +64,7 @@ final class TranslationService
         $this->updater->process($config);
     }
 
-    private function getConfig(string $configName): \JMS\TranslationBundle\Translation\Config
+    private function getConfig(string $configName): Config
     {
         $this->configureHandlerForMissingTwig();
 
@@ -79,21 +80,25 @@ final class TranslationService
             return;
         }
 
-        $this->twigEnvironment->registerUndefinedFunctionCallback(function (string $name): ?TwigFunction {
-            if ($this->functions === null || in_array($name, $this->functions, true)) {
-                return new TwigFunction($name, static fn (): string => '');
+        $this->twigEnvironment->registerUndefinedFunctionCallback(
+            function (string $name): TwigFunction|false {
+                if ($this->functions === null || in_array($name, $this->functions, true)) {
+                    return new TwigFunction($name, static fn (): string => '');
+                }
+
+                return false;
             }
+        );
 
-            return null;
-        });
+        $this->twigEnvironment->registerUndefinedFilterCallback(
+            function (string $name): TwigFilter|false {
+                if ($this->filters === null || in_array($name, $this->filters, true)) {
+                    return new TwigFilter($name, static fn ($value) => $value);
+                }
 
-        $this->twigEnvironment->registerUndefinedFilterCallback(function (string $name): ?TwigFilter {
-            if ($this->filters === null || in_array($name, $this->filters, true)) {
-                return new TwigFilter($name, static fn ($value) => $value);
+                return false;
             }
-
-            return null;
-        });
+        );
 
         $this->twigConfigured = true;
     }
