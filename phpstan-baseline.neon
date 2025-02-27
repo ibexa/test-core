@@ -1,2 +1,13 @@
 parameters:
-	ignoreErrors: []
+	ignoreErrors:
+		-
+			message: '#^Parameter \#1 \$callable of method Twig\\Environment\:\:registerUndefinedFilterCallback\(\) expects callable\(string\)\: \(Twig\\TwigFilter\|false\), Closure\(string\)\: \(Twig\\TwigFilter\|null\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/contracts/Translation/TranslationService.php
+
+		-
+			message: '#^Parameter \#1 \$callable of method Twig\\Environment\:\:registerUndefinedFunctionCallback\(\) expects callable\(string\)\: \(Twig\\TwigFunction\|false\), Closure\(string\)\: \(Twig\\TwigFunction\|null\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/contracts/Translation/TranslationService.php
