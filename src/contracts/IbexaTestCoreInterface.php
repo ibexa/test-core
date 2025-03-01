@@ -43,6 +43,7 @@ interface IbexaTestCoreInterface
 
     /**
      * @template T of object
+     *
      * @phpstan-param class-string<T> $className
      *
      * @return T
