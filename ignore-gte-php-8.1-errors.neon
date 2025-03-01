@@ -11,3 +11,4 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/contracts/Translation/TranslationService.php
+
