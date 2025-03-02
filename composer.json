@@ -21,8 +21,8 @@
         "ibexa/core": "~5.0.x-dev",
         "ibexa/doctrine-schema": "~5.0.x-dev",
         "ibexa/rector": "~5.0.x-dev",
-        "phpstan/phpstan": "^1.2",
-        "phpstan/phpstan-phpunit": "^1.0"
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0"
     },
     "autoload": {
         "psr-4": {
