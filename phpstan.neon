@@ -1,5 +1,5 @@
 includes:
-    - phpstan-baseline.neon
+    - ignore-by-php-version.neon.php
     - vendor/phpstan/phpstan-phpunit/extension.neon
 
 parameters:
