@@ -15,13 +15,13 @@
         "symfony/yaml": "^7.2"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9",
         "ibexa/code-style": "^2.0",
-        "ibexa/core": "~5.0.x-dev",
-        "ibexa/doctrine-schema": "~5.0.x-dev",
-        "ibexa/rector": "~5.0.x-dev",
+        "ibexa/core": "dev-ibx-8471-symfony-7 as 5.0.x-dev",
+        "ibexa/doctrine-schema": "dev-ibx-8471-symfony-7 as 5.0.x-dev",
+        "ibexa/rector": "dev-ibx-8471-symfony-7 as 5.0.x-dev",
         "phpstan/phpstan": "^2.0",
-        "phpstan/phpstan-phpunit": "^2.0"
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpunit/phpunit": "^9"
     },
     "autoload": {
         "psr-4": {
