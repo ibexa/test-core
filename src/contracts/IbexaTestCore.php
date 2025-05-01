@@ -67,7 +67,7 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     }
 
     /**
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function loadFixtures(?callable $postLoadFixtures = null): void
     {
