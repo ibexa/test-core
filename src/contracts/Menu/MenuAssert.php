@@ -13,7 +13,7 @@ use Knp\Menu\ItemInterface;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Constraint\LogicalNot;
 
-class MenuAssert
+final class MenuAssert
 {
     /**
      * @param string[] $path
