@@ -20,6 +20,7 @@
         "ibexa/code-style": "^1.1",
         "ibexa/core": "~4.6.x-dev",
         "ibexa/doctrine-schema": "~4.6.x-dev",
+        "knplabs/knp-menu": "^3.3",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0"
     },
