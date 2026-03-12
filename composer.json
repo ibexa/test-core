@@ -5,6 +5,12 @@
     "keywords": [
         "ibexa-dxp"
     ],
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://updates.ibexa.co"
+        }
+    ],
     "require": {
         "php": "^7.4 || ^8.0",
         "doctrine/dbal": "^2.13.0",
@@ -22,14 +28,18 @@
         "ibexa/doctrine-schema": "~4.6.x-dev",
         "knplabs/knp-menu": "^3.3",
         "phpstan/phpstan": "^2.0",
-        "phpstan/phpstan-phpunit": "^2.0"
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpunit/phpunit": "^9"
     },
     "autoload": {
         "psr-4": {
             "Ibexa\\Bundle\\Test\\Core\\": "src/bundle/",
             "Ibexa\\Contracts\\Test\\Core\\": "src/contracts/",
             "Ibexa\\Test\\Core\\": "src/lib/"
-        }
+        },
+        "files": [
+            "src/contracts/bootstrap.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
