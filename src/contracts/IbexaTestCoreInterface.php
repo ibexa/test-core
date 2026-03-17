@@ -21,6 +21,7 @@ use Ibexa\Contracts\Core\Repository\SearchService;
 use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
+use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 
 /**
  * @experimental
@@ -37,7 +38,7 @@ interface IbexaTestCoreInterface
     public function loadFixtures(): void;
 
     /**
-     * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
+     * @return iterable<Fixture>
      */
     public function getFixtures(): iterable;
 
@@ -48,7 +49,11 @@ interface IbexaTestCoreInterface
      *
      * @return T
      */
-    public function getServiceByClassName(string $className, ?string $id = null, bool $prefix = true): object;
+    public function getServiceByClassName(
+        string $className,
+        ?string $id = null,
+        bool $prefix = true
+    ): object;
 
     public function getDoctrineConnection(): Connection;
 

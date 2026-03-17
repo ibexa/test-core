@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Ibexa\Contracts\Test\Core;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
@@ -22,6 +23,7 @@ use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
+use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Core\Repository\Values\User\UserReference;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
@@ -32,7 +34,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @internal use IbexaTestCoreInterface instead.
  *
- * @see \Ibexa\Contracts\Test\Core\IbexaTestCoreInterface
+ * @see IbexaTestCoreInterface
  */
 final class IbexaTestCore implements IbexaTestCoreInterface
 {
@@ -43,15 +45,17 @@ final class IbexaTestCore implements IbexaTestCoreInterface
 
     private IbexaTestKernelInterface $kernel;
 
-    public function __construct(ContainerInterface $container, IbexaTestKernelInterface $kernel)
-    {
+    public function __construct(
+        ContainerInterface $container,
+        IbexaTestKernelInterface $kernel
+    ) {
         $this->container = $container;
         $this->kernel = $kernel;
     }
 
     public function loadSchema(): void
     {
-        /** @var \Ibexa\Tests\Core\Repository\LegacySchemaImporter $schemaImporter */
+        /** @var LegacySchemaImporter $schemaImporter */
         $schemaImporter = $this->container->get(LegacySchemaImporter::class);
         foreach ($this->getSchemaFiles() as $schemaFile) {
             $schemaImporter->importSchema($schemaFile);
@@ -67,11 +71,11 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     }
 
     /**
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     public function loadFixtures(?callable $postLoadFixtures = null): void
     {
-        /** @var \Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter $fixtureImporter */
+        /** @var FixtureImporter $fixtureImporter */
         $fixtureImporter = $this->container->get(FixtureImporter::class);
         foreach ($this->getFixtures() as $fixture) {
             $fixtureImporter->import($fixture);
@@ -83,7 +87,7 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     }
 
     /**
-     * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
+     * @return iterable<Fixture>
      */
     public function getFixtures(): iterable
     {
@@ -97,8 +101,11 @@ final class IbexaTestCore implements IbexaTestCoreInterface
      *
      * @return T
      */
-    public function getServiceByClassName(string $className, ?string $id = null, bool $prefix = true): object
-    {
+    public function getServiceByClassName(
+        string $className,
+        ?string $id = null,
+        bool $prefix = true
+    ): object {
         $serviceId = $this->getTestServiceId($id, $className, $prefix);
         $service = $this->container->get($serviceId);
         assert(is_object($service) && is_a($service, $className));
@@ -106,8 +113,11 @@ final class IbexaTestCore implements IbexaTestCoreInterface
         return $service;
     }
 
-    private function getTestServiceId(?string $id, string $className, bool $prefix): string
-    {
+    private function getTestServiceId(
+        ?string $id,
+        string $className,
+        bool $prefix
+    ): string {
         $id = $id ?? $className;
 
         return $prefix ? $this->kernel::getAliasServiceId($id) : $id;
