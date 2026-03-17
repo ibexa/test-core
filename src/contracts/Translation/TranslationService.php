@@ -81,7 +81,7 @@ final class TranslationService
         }
 
         $this->twigEnvironment->registerUndefinedFunctionCallback(
-            function (string $name): TwigFunction|false {
+            function (string $name): TwigFunction | false {
                 if ($this->functions === null || in_array($name, $this->functions, true)) {
                     return new TwigFunction($name, static fn (): string => '');
                 }
@@ -91,7 +91,7 @@ final class TranslationService
         );
 
         $this->twigEnvironment->registerUndefinedFilterCallback(
-            function (string $name): TwigFilter|false {
+            function (string $name): TwigFilter | false {
                 if ($this->filters === null || in_array($name, $this->filters, true)) {
                     return new TwigFilter($name, static fn ($value) => $value);
                 }
