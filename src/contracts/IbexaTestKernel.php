@@ -77,7 +77,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     /**
      * @var iterable<class-string>
      */
-    protected const EXPOSED_SERVICES_BY_CLASS = [
+    protected const array EXPOSED_SERVICES_BY_CLASS = [
         TransactionHandler::class,
         Connection::class,
         Repository\Repository::class,
@@ -99,7 +99,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     /**
      * @var iterable<string, class-string>
      */
-    protected const EXPOSED_SERVICES_BY_ID = [];
+    protected const array EXPOSED_SERVICES_BY_ID = [];
 
     /**
      * @return string a service ID that service aliases will be registered as
@@ -123,6 +123,14 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     public function getFixtures(): iterable
     {
         yield new YamlFixture(__DIR__ . '/Resources/test_data.yaml');
+    }
+
+    /**
+     * @phpstan-return iterable<non-empty-string>
+     */
+    public function getMigrationFiles(): iterable
+    {
+        return [];
     }
 
     public function getCacheDir(): string
