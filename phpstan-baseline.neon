@@ -5,3 +5,9 @@ parameters:
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: src/contracts/IbexaTestCore.php
+
+		-
+			message: '#^Attribute class PHPUnit\\Framework\\Attributes\\DataProvider does not exist\.$#'
+			identifier: attribute.notFound
+			count: 1
+			path: src/contracts/Translation/AbstractTranslationCase.php
