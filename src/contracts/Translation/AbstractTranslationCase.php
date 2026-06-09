@@ -11,6 +11,7 @@ namespace Ibexa\Contracts\Test\Core\Translation;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 use JMS\TranslationBundle\Model\Message;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 abstract class AbstractTranslationCase extends IbexaKernelTestCase
 {
@@ -22,6 +23,7 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
     /**
      * @dataProvider provideConfigNamesForTranslation
      */
+    #[DataProvider('provideConfigNamesForTranslation')]
     final public function testTranslation(string $configName): void
     {
         $facade = $this->getTranslationService();
