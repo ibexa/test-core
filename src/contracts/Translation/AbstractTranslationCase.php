@@ -10,6 +10,7 @@ namespace Ibexa\Contracts\Test\Core\Translation;
 
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 use JMS\TranslationBundle\Model\Message;
+use JMS\TranslationBundle\Translation\Comparison\ChangeSet;
 use LogicException;
 
 abstract class AbstractTranslationCase extends IbexaKernelTestCase
@@ -27,8 +28,22 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
         $facade = $this->getTranslationService();
         $changeset = $facade->getChangeSet($configName);
 
+        self::assertTranslationsUpToDate($changeset);
+    }
+
+    /**
+     * Asserts that a changeset is empty, i.e. translations are up to date with the code:
+     * no message ids were added or deleted, and no existing message's desc/meaning (the
+     * code-derived default text) has drifted from what is currently on disk.
+     *
+     * Kept separate from testTranslation() (and static) so the assertion logic can be
+     * unit-tested without booting a kernel.
+     */
+    public static function assertTranslationsUpToDate(ChangeSet $changeset): void
+    {
         $addedMessages = $changeset->getAddedMessages();
         $deletedMessages = $changeset->getDeletedMessages();
+        $changedMessages = $changeset->getChangedMessages();
 
         $message = 'Translations need to be regenerated.';
         if (count($addedMessages) > 0) {
@@ -65,7 +80,24 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
             );
         }
 
-        self::assertCount(0, array_merge($addedMessages, $deletedMessages), $message);
+        if (count($changedMessages) > 0) {
+            $message .= sprintf(
+                "\nFollowing translation ids changed in code but the translation file is stale (run translation:extract):\n%s",
+                implode(
+                    "\n",
+                    array_map(
+                        static fn (Message $message): string => sprintf(
+                            ' * %s [domain: %s]',
+                            $message->getId(),
+                            $message->getDomain()
+                        ),
+                        $changedMessages,
+                    ),
+                ),
+            );
+        }
+
+        self::assertCount(0, array_merge($addedMessages, $deletedMessages, $changedMessages), $message);
     }
 
     private function getTranslationService(): TranslationService
