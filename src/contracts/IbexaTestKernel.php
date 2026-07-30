@@ -123,10 +123,21 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     }
 
     /**
+     * When the Doctrine Migrations schema-install path is active (as opposed to the legacy,
+     * event-driven SchemaBuilderEvent path), core's own ImportDataMigration already inserts this
+     * same baseline content as part of schema install -- importing it again here would violate
+     * unique constraints. Package-specific fixtures added by subclasses (via
+     * `yield from parent::getFixtures(); yield new Fixture(...)`) are unaffected and still run in
+     * both modes, since they're additive rather than overlapping with ImportDataMigration's output.
+     *
      * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
      */
     public function getFixtures(): iterable
     {
+        if (getenv('IBEXA_TEST_SCHEMA_BUILDER_EVENT_ENABLED') === '0') {
+            return;
+        }
+
         yield from (new DefaultFixtureProvider())->getFixtures();
     }
 
