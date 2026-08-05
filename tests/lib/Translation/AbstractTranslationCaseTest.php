@@ -23,31 +23,37 @@ final class AbstractTranslationCaseTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
-    public function testAddedMessagesFail(): void
-    {
+    /**
+     * @dataProvider provideChangeSetsWithPendingMessages
+     */
+    public function testChangeSetWithPendingMessagesFails(
+        ChangeSet $changeSet,
+        string $expectedMessage
+    ): void {
         $this->expectException(AssertionFailedError::class);
+        $this->expectExceptionMessage($expectedMessage);
 
-        AbstractTranslationCase::assertTranslationsUpToDate(
-            new ChangeSet([Message::create('foo.bar')], [])
-        );
+        AbstractTranslationCase::assertTranslationsUpToDate($changeSet);
     }
 
-    public function testDeletedMessagesFail(): void
+    /**
+     * @return iterable<string, array{ChangeSet, string}>
+     */
+    public static function provideChangeSetsWithPendingMessages(): iterable
     {
-        $this->expectException(AssertionFailedError::class);
+        yield 'added message' => [
+            new ChangeSet([Message::create('foo.added')], []),
+            'Missing translation with following ids',
+        ];
 
-        AbstractTranslationCase::assertTranslationsUpToDate(
-            new ChangeSet([], [Message::create('foo.bar')])
-        );
-    }
+        yield 'deleted message' => [
+            new ChangeSet([], [Message::create('foo.deleted')]),
+            'Following translation ids no longer exist',
+        ];
 
-    public function testChangedMessagesFail(): void
-    {
-        $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('foo.bar');
-
-        AbstractTranslationCase::assertTranslationsUpToDate(
-            new ChangeSet([], [], [Message::create('foo.bar')])
-        );
+        yield 'changed message' => [
+            new ChangeSet([], [], [Message::create('foo.changed')]),
+            'Following translation ids changed in code',
+        ];
     }
 }
