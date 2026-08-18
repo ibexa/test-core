@@ -8,6 +8,7 @@
     "require": {
         "php": ">=8.3",
         "doctrine/dbal": "^3.7.0",
+        "ibexa/jms-translation-bundle": "^2.6.0",
         "symfony/framework-bundle": "^7.4",
         "symfony/mime": "^7.4",
         "symfony/translation": "^7.4",
