@@ -23,7 +23,10 @@ jobs:
           gh-client-secret: ${{ secrets.AUTOMATION_CLIENT_SECRET }}
 
       - name: Run code style check
-        run: composer run-script check-cs -- --format=checkstyle | cs2pr
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer run-script check-cs -- --format=checkstyle | cs2pr
 
   tests:
     name: Tests
