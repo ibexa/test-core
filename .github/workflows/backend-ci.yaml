@@ -3,7 +3,6 @@ name: CI
 on:
   push:
     branches:
-      - main
       - '[0-9]+.[0-9]+'
   pull_request: ~
 
@@ -11,32 +10,25 @@ jobs:
   cs-fix:
     if: github.event.repository.name != 'repo-template'
     name: Run code style check
-    runs-on: "ubuntu-22.04"
+    runs-on: "ubuntu-26.04"
     strategy:
       matrix:
         php:
           - '8.0'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
-      - name: Setup PHP Action
-        uses: shivammathur/setup-php@v2
+      - uses: ibexa/gh-workflows/actions/composer-install@main
         with:
-          php-version: ${{ matrix.php }}
-          coverage: none
-          extensions: 'pdo_sqlite, gd'
-          tools: cs2pr
-
-      - uses: ramsey/composer-install@v2
-        with:
-          dependency-versions: highest
+          gh-client-id: ${{ secrets.AUTOMATION_CLIENT_ID }}
+          gh-client-secret: ${{ secrets.AUTOMATION_CLIENT_SECRET }}
 
       - name: Run code style check
         run: composer run-script check-cs -- --format=checkstyle | cs2pr
 
   tests:
     name: Tests
-    runs-on: "ubuntu-22.04"
+    runs-on: "ubuntu-26.04"
     timeout-minutes: 10
 
     strategy:
@@ -49,19 +41,12 @@ jobs:
           - '8.2'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
-      - name: Setup PHP Action
-        uses: shivammathur/setup-php@v2
+      - uses: ibexa/gh-workflows/actions/composer-install@main
         with:
-          php-version: ${{ matrix.php }}
-          coverage: none
-          extensions: pdo_sqlite, gd
-          tools: cs2pr
-
-      - uses: ramsey/composer-install@v2
-        with:
-          dependency-versions: highest
+          gh-client-id: ${{ secrets.AUTOMATION_CLIENT_ID }}
+          gh-client-secret: ${{ secrets.AUTOMATION_CLIENT_SECRET }}
 
       - name: Setup problem matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
