@@ -2,7 +2,7 @@
     "recipesEndpoint": "",
     "packages": [
         {
-            "requirement": "dev-feature/force-extract-and-changed-detection as 2.x-dev",
+            "requirement": "2.x-dev",
             "repositoryUrl": "https://github.com/ibexa/jms-translation-bundle",
             "package": "ibexa/jms-translation-bundle",
             "shouldBeAddedAsVCS": true
