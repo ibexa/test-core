@@ -1,64 +1,71 @@
 <?php
 
+/**
+ * @copyright Copyright (C) Ibexa AS. All rights reserved.
+ * @license For full copyright and license information view LICENSE file distributed with this source code.
+ */
+declare(strict_types=1);
+
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Ibexa\Contracts\Core\Search\VersatileHandler;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
-use Ibexa\Contracts\Migration\MigrationService;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
-use Ibexa\Migration\Repository\Migration;
-use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 use LogicException;
 use Psr\Container\ContainerInterface;
-use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 
+/**
+ * @experimental
+ *
+ * Entry point for a package's `tests/integration/bootstrap.php`. Boots the test kernel, prepares the
+ * database, and runs every registered {@see HookInterface} (schema import, fixture import, and whatever
+ * else a bundle present in the kernel contributes — e.g. ibexa/migrations tags its own hook to run
+ * migrations, with no changes needed here).
+ *
+ * Supported `$options` keys:
+ *  - schema_update (bool, default true): run `doctrine:schema:update` against the ORM-mapped schema
+ *  - schema (bool, default true): read by {@see \Ibexa\Test\Core\Bootstrapper\SchemaHook}
+ *  - fixtures (bool, default true): read by {@see \Ibexa\Test\Core\Bootstrapper\FixtureHook}
+ *  - purge_index (bool, default false): read by {@see \Ibexa\Test\Core\Bootstrapper\PurgeIndexHook}
+ *
+ * Other hooks may define and read their own option keys; this class does not need to know about them.
+ */
 final class Bootstrapper
 {
-    private bool $schemaUpdate;
-
-    private bool $purgeIndex;
-
-    public function __construct(
-        ?bool $schemaUpdate = true,
-        ?bool $purgeIndex = false
-    ) {
-        $this->schemaUpdate = $schemaUpdate ?? true;
-        $this->purgeIndex = $purgeIndex ?? false;
-    }
-
+    /**
+     * @param array<string, mixed> $options
+     */
     public function __invoke(
         ?string $kernelClass = null,
         array $options = []
     ): IbexaTestKernel {
-
-        $resolver = new OptionsResolver();
-        $resolver->define('schema_update')
-            ->allowedTypes('bool')
-            ->default(true);
-
-        $resolver->define('purge_index')
-            ->allowedTypes('bool')
-            ->default(false);
-
-        $options = $resolver->resolve($options);
-
-
-
-        $kernelClass ??= $_ENV['KERNEL_CLASS'] ?? $_SERVER['KERNEL_CLASS'];
-        if (!is_a($kernelClass, IbexaTestKernel::class, true)) {
+        $kernelClass ??= $_ENV['KERNEL_CLASS'] ?? $_SERVER['KERNEL_CLASS'] ?? null;
+        if ($kernelClass === null || !is_a($kernelClass, IbexaTestKernel::class, true)) {
             throw new LogicException(sprintf(
-                'The kernel class "%s" must be a subclass of "%s". Ensure that KERNEL_CLASS environment variable is set to a valid test kernel class.',
-                $kernelClass,
+                'The kernel class "%s" must be a subclass of "%s". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class.',
+                $kernelClass ?? 'null',
                 IbexaTestKernel::class,
             ));
         }
 
+        /** @var IbexaTestKernel $kernel */
         $kernel = new $kernelClass('test', true);
         $kernel->boot();
 
+        $this->prepareDatabase($kernel, $options);
+
+        /** @var ContainerInterface $testContainer */
+        $testContainer = $kernel->getContainer()->get('test.service_container');
+        $testContainer->get(HooksExecutorInterface::class)->execute($options);
+
+        return $kernel;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function prepareDatabase(IbexaTestKernel $kernel, array $options): void
+    {
         $application = new Application($kernel);
         $application->setAutoExit(false);
         $application->setCatchExceptions(false);
@@ -80,7 +87,7 @@ final class Bootstrapper
             '--quiet' => true,
         ]));
 
-        if ($options['schema_update']) {
+        if ($options['schema_update'] ?? true) {
             $application->run(new ArrayInput([
                 'command' => 'doctrine:schema:update',
                 '--em' => 'ibexa_default',
@@ -88,42 +95,5 @@ final class Bootstrapper
                 '--quiet' => true,
             ]));
         }
-
-        /** @var ContainerInterface $testContainer */
-        $testContainer = $kernel->getContainer()->get('test.service_container');
-
-        $schemaImporter = $testContainer->get(LegacySchemaImporter::class);
-        foreach ($kernel->getSchemaFiles() as $file) {
-            $schemaImporter->importSchema($file);
-        }
-
-        $fixtureImporter = $testContainer->get(FixtureImporter::class);
-        foreach ($kernel->getFixtures() as $fixture) {
-            $fixtureImporter->import($fixture);
-        }
-
-        foreach ($kernel->getMigrationFiles() as $migrationFile) {
-            if (!class_exists(MigrationService::class)) {
-                throw new LogicException(sprintf(
-                    '%s class not found. Install ibexa/migrations package to use migrations.',
-                    MigrationService::class,
-                ));
-            }
-            $migrationService = $testContainer->get(MigrationService::class);
-            $content = file_get_contents($migrationFile);
-            if ($content === false) {
-                throw new RuntimeException(sprintf('Failed to read "%s" contents', $migrationFile));
-            }
-
-            $migrationService->executeOne(new Migration(uniqid(), $content));
-        }
-
-        if ($options['purge_index']) {
-            /** @var VersatileHandler $handler */
-            $handler = $testContainer->get('ibexa.spi.search');
-            $handler->purgeIndex();
-        }
-
-        return $kernel;
     }
 }

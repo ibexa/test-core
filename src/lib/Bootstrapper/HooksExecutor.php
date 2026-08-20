@@ -1,24 +1,35 @@
 <?php
 
+/**
+ * @copyright Copyright (C) Ibexa AS. All rights reserved.
+ * @license For full copyright and license information view LICENSE file distributed with this source code.
+ */
+declare(strict_types=1);
+
 namespace Ibexa\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 
 final class HooksExecutor implements HooksExecutorInterface
 {
+    /**
+     * @var iterable<HookInterface>
+     */
     private iterable $hooks;
 
-    public function __construct(
-        iterable $hooks
-    ) {
+    /**
+     * @param iterable<HookInterface> $hooks
+     */
+    public function __construct(iterable $hooks)
+    {
         $this->hooks = $hooks;
     }
 
-    #[\Override]
-    public function execute(): void
+    public function execute(array $options = []): void
     {
         foreach ($this->hooks as $hook) {
-            $hook();
+            $hook($options);
         }
     }
 }

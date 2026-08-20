@@ -11,6 +11,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
+use Ibexa\Test\Core\Bootstrapper\PurgeIndexHook;
 use Ibexa\Test\Core\Bootstrapper\SchemaHook;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -19,8 +20,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure()
         ->private();
-
-    $services->set(HooksExecutorInterface::class);
 
     $services->alias(HooksExecutorInterface::class, HooksExecutor::class);
 
@@ -32,4 +31,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(FixtureHook::class)
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 900]);
+
+    $services->set(PurgeIndexHook::class)
+        ->arg('$handler', service('ibexa.spi.search'))
+        ->tag('ibexa.test.bootstrapper.hook', ['priority' => 100]);
 };
