@@ -124,14 +124,6 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
         yield new YamlFixture(__DIR__ . '/Resources/test_data.yaml');
     }
 
-    /**
-     * @phpstan-return iterable<non-empty-string>
-     */
-    public function getMigrationFiles(): iterable
-    {
-        return [];
-    }
-
     public function getCacheDir(): string
     {
         return sys_get_temp_dir() . '/ibexa-test-kernel/' . md5(serialize(getenv())) . md5(static::class);
