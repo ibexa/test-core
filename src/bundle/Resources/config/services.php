@@ -26,7 +26,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(HooksExecutor::class)
         ->public()
-        ->arg('$hooks', tagged_iterator('ibexa.test.bootstrapper.hook'));
+        // Indexed by service id (the "id" attribute isn't set by any hook's tag, so every hook
+        // falls back to its own service id as the key) while staying a plain priority-sorted
+        // iterator - tagged_locator() would also index by service id, but its ServiceLocator
+        // wrapper re-sorts entries alphabetically by key, destroying the priority order hooks rely on.
+        ->arg('$hooks', tagged_iterator('ibexa.test.bootstrapper.hook', 'id'));
 
     $services->set(SchemaHook::class)
         ->arg('$kernel', service('kernel'))

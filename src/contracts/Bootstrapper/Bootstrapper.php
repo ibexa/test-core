@@ -21,13 +21,19 @@ use Symfony\Component\Console\Input\ArrayInput;
  * else a bundle present in the kernel contributes — e.g. ibexa/migrations tags its own hook to run
  * migrations, with no changes needed here).
  *
- * Supported `$options` keys:
- *  - schema_update (bool, default true): run `doctrine:schema:update` against the ORM-mapped schema
- *  - schema (bool, default true): read by {@see \Ibexa\Test\Core\Bootstrapper\SchemaHook}
- *  - fixtures (bool, default true): read by {@see \Ibexa\Test\Core\Bootstrapper\FixtureHook}
- *  - purge_index (bool, default false): read by {@see \Ibexa\Test\Core\Bootstrapper\PurgeIndexHook}
+ * `$options` is a top-level array with two kinds of keys:
+ *  - schema_update (bool, default true): Bootstrapper's own option — run `doctrine:schema:update`
+ *    against the ORM-mapped schema. Not read by any Hook.
+ *  - HookClass::class => [...]: each hook's own options, under a key equal to that hook's own
+ *    service id (which, for the built-in hooks below, is their own FQCN), resolved against whatever
+ *    that hook declares in {@see HookInterface::configureOptions()}. For example:
+ *      - \Ibexa\Test\Core\Bootstrapper\SchemaHook::class => ['schema' => false]
+ *      - \Ibexa\Test\Core\Bootstrapper\FixtureHook::class => ['fixtures' => false]
+ *      - \Ibexa\Test\Core\Bootstrapper\PurgeIndexHook::class => ['purge_index' => true]
  *
- * Other hooks may define and read their own option keys; this class does not need to know about them.
+ * Other hooks (including ones contributed by a downstream bundle, e.g. ibexa/migrations' own
+ * MigrationHook) may define and read their own FQCN-keyed options sub-array the same way; this
+ * class does not need to know about them.
  */
 final class Bootstrapper
 {

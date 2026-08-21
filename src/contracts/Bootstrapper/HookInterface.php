@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
 /**
  * @experimental
  *
@@ -21,8 +23,17 @@ namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 interface HookInterface
 {
     /**
-     * @param array<string, mixed> $options the options passed to the bootstrapper; a hook should
-     *                                       only read the option(s) it cares about and ignore the rest
+     * Declares this hook's own options — names, defaults, allowed types — via OptionsResolver, the
+     * same way {@see \Symfony\Component\Form\FormTypeInterface::configureOptions()} does for form
+     * types. Called with a fresh resolver once per {@see HooksExecutorInterface::execute()} run,
+     * before this hook's own sub-array of options (keyed by this hook's own service id in the
+     * top-level array passed to execute()) is resolved against it.
+     */
+    public function configureOptions(OptionsResolver $resolver): void;
+
+    /**
+     * @param array<string, mixed> $options this hook's own options, already resolved against
+     *                                       configureOptions()
      */
     public function __invoke(array $options): void;
 }

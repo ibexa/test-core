@@ -11,6 +11,7 @@ namespace Ibexa\Test\Core\Bootstrapper;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Imports the fixtures exposed by the test kernel via {@see IbexaTestKernelInterface::getFixtures()}.
@@ -19,7 +20,8 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
  * autowiring only resolves the synthetic "kernel" service by the interfaces it implements, not by
  * intermediate parent classes.
  *
- * Enabled by default; pass `['fixtures' => false]` as bootstrap options to skip it.
+ * Enabled by default; pass `['fixtures' => false]` as this hook's own options (keyed by its own
+ * service id in the bootstrap options array) to skip it.
  */
 final class FixtureHook implements HookInterface
 {
@@ -35,9 +37,15 @@ final class FixtureHook implements HookInterface
         $this->fixtureImporter = $fixtureImporter;
     }
 
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults(['fixtures' => true]);
+        $resolver->setAllowedTypes('fixtures', 'bool');
+    }
+
     public function __invoke(array $options): void
     {
-        if (!($options['fixtures'] ?? true)) {
+        if (!$options['fixtures']) {
             return;
         }
 

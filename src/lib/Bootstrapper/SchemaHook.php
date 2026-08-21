@@ -11,6 +11,7 @@ namespace Ibexa\Test\Core\Bootstrapper;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Imports the legacy raw-SQL schema files exposed by the test kernel via
@@ -20,7 +21,8 @@ use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
  * autowiring only resolves the synthetic "kernel" service by the interfaces it implements, not by
  * intermediate parent classes.
  *
- * Enabled by default; pass `['schema' => false]` as bootstrap options to skip it.
+ * Enabled by default; pass `['schema' => false]` as this hook's own options (keyed by its own
+ * service id in the bootstrap options array) to skip it.
  */
 final class SchemaHook implements HookInterface
 {
@@ -36,9 +38,15 @@ final class SchemaHook implements HookInterface
         $this->schemaImporter = $schemaImporter;
     }
 
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults(['schema' => true]);
+        $resolver->setAllowedTypes('schema', 'bool');
+    }
+
     public function __invoke(array $options): void
     {
-        if (!($options['schema'] ?? true)) {
+        if (!$options['schema']) {
             return;
         }
 
