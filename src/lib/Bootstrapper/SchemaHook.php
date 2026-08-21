@@ -8,23 +8,28 @@ declare(strict_types=1);
 
 namespace Ibexa\Test\Core\Bootstrapper;
 
+use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
-use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 
 /**
- * Imports the legacy raw-SQL schema files exposed by the test kernel via {@see IbexaTestKernel::getSchemaFiles()}.
+ * Imports the legacy raw-SQL schema files exposed by the test kernel via
+ * {@see IbexaTestKernelInterface::getSchemaFiles()}.
+ *
+ * Typed against the interface, not the concrete Ibexa\Contracts\Test\Core\IbexaTestKernel: Symfony's
+ * autowiring only resolves the synthetic "kernel" service by the interfaces it implements, not by
+ * intermediate parent classes.
  *
  * Enabled by default; pass `['schema' => false]` as bootstrap options to skip it.
  */
 final class SchemaHook implements HookInterface
 {
-    private IbexaTestKernel $kernel;
+    private IbexaTestKernelInterface $kernel;
 
     private LegacySchemaImporter $schemaImporter;
 
     public function __construct(
-        IbexaTestKernel $kernel,
+        IbexaTestKernelInterface $kernel,
         LegacySchemaImporter $schemaImporter
     ) {
         $this->kernel = $kernel;

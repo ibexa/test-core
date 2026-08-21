@@ -21,15 +21,19 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autoconfigure()
         ->private();
 
-    $services->alias(HooksExecutorInterface::class, HooksExecutor::class);
+    $services->alias(HooksExecutorInterface::class, HooksExecutor::class)
+        ->public();
 
     $services->set(HooksExecutor::class)
+        ->public()
         ->arg('$hooks', tagged_iterator('ibexa.test.bootstrapper.hook'));
 
     $services->set(SchemaHook::class)
+        ->arg('$kernel', service('kernel'))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 1000]);
 
     $services->set(FixtureHook::class)
+        ->arg('$kernel', service('kernel'))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 900]);
 
     $services->set(PurgeIndexHook::class)
