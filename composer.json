@@ -5,12 +5,6 @@
     "keywords": [
         "ibexa-dxp"
     ],
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://updates.ibexa.co"
-        }
-    ],
     "require": {
         "php": "^7.4 || ^8.0",
         "doctrine/dbal": "^2.13.0",
