@@ -8,9 +8,9 @@ declare(strict_types=1);
 
 namespace Ibexa\Test\Core\Bootstrapper;
 
+use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 
 /**
  * Imports the fixtures exposed by the test kernel via {@see IbexaTestKernel::getFixtures()}.
@@ -20,6 +20,7 @@ use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 final class FixtureHook implements HookInterface
 {
     private IbexaTestKernel $kernel;
+
     private FixtureImporter $fixtureImporter;
 
     public function __construct(

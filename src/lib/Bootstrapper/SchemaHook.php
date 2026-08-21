@@ -20,6 +20,7 @@ use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 final class SchemaHook implements HookInterface
 {
     private IbexaTestKernel $kernel;
+
     private LegacySchemaImporter $schemaImporter;
 
     public function __construct(

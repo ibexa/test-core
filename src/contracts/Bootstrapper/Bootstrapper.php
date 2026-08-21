@@ -10,7 +10,6 @@ namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
-use Psr\Container\ContainerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 
@@ -48,13 +47,13 @@ final class Bootstrapper
             ));
         }
 
-        /** @var IbexaTestKernel $kernel */
+        /** @var \Ibexa\Contracts\Test\Core\IbexaTestKernel $kernel */
         $kernel = new $kernelClass('test', true);
         $kernel->boot();
 
         $this->prepareDatabase($kernel, $options);
 
-        /** @var ContainerInterface $testContainer */
+        /** @var \Psr\Container\ContainerInterface $testContainer */
         $testContainer = $kernel->getContainer()->get('test.service_container');
         $testContainer->get(HooksExecutorInterface::class)->execute($options);
 

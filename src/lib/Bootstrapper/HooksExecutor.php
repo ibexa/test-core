@@ -8,8 +8,8 @@ declare(strict_types=1);
 
 namespace Ibexa\Test\Core\Bootstrapper;
 
-use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 
 final class HooksExecutor implements HooksExecutorInterface
 {
