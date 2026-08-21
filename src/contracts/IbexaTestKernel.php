@@ -76,7 +76,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     /**
      * @var iterable<class-string>
      */
-    protected const array EXPOSED_SERVICES_BY_CLASS = [
+    protected const EXPOSED_SERVICES_BY_CLASS = [
         TransactionHandler::class,
         Connection::class,
         Repository\Repository::class,
@@ -98,7 +98,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     /**
      * @var iterable<string, class-string>
      */
-    protected const array EXPOSED_SERVICES_BY_ID = [];
+    protected const EXPOSED_SERVICES_BY_ID = [];
 
     /**
      * @return string a service ID that service aliases will be registered as
