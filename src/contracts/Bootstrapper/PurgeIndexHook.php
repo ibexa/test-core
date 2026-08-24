@@ -14,11 +14,13 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * Purges the search index.
  *
- * Disabled by default; pass `['purge_index' => true]` as this hook's own options (keyed by its own
- * service id in the bootstrap options array) to enable it.
+ * Disabled by default; pass `[self::OPTION_PURGE_INDEX => true]` as this hook's own options (keyed
+ * by its own service id in the bootstrap options array) to enable it.
  */
 final class PurgeIndexHook implements HookInterface
 {
+    public const OPTION_PURGE_INDEX = 'purge_index';
+
     private VersatileHandler $handler;
 
     public function __construct(VersatileHandler $handler)
@@ -28,14 +30,14 @@ final class PurgeIndexHook implements HookInterface
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->define('purge_index')
+        $resolver->define(self::OPTION_PURGE_INDEX)
             ->default(false)
             ->allowedTypes('bool');
     }
 
     public function __invoke(array $options): void
     {
-        if (!$options['purge_index']) {
+        if (!$options[self::OPTION_PURGE_INDEX]) {
             return;
         }
 

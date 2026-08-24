@@ -30,9 +30,9 @@ use Symfony\Component\HttpKernel\KernelInterface;
  *  - HookClass::class => [...]: each hook's own options, under a key equal to that hook's own
  *    service id (which, for the built-in hooks below, is their own FQCN), resolved against whatever
  *    that hook declares in {@see HookInterface::configureOptions()}. For example:
- *      - \Ibexa\Contracts\Test\Core\Bootstrapper\SchemaHook::class => ['load_schema' => false]
- *      - \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook::class => ['load_fixtures' => false]
- *      - \Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexHook::class => ['purge_index' => true]
+ *      - SchemaHook::class => [SchemaHook::OPTION_LOAD_SCHEMA => false]
+ *      - FixtureHook::class => [FixtureHook::OPTION_LOAD_FIXTURES => false]
+ *      - PurgeIndexHook::class => [PurgeIndexHook::OPTION_PURGE_INDEX => true]
  *
  * Other hooks (including ones contributed by a downstream bundle, e.g. ibexa/migrations' own
  * MigrationHook) may define and read their own FQCN-keyed options sub-array the same way; this

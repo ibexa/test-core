@@ -20,11 +20,13 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * autowiring only resolves the synthetic "kernel" service by the interfaces it implements, not by
  * intermediate parent classes.
  *
- * Enabled by default; pass `['load_schema' => false]` as this hook's own options (keyed by its own
- * service id in the bootstrap options array) to skip it.
+ * Enabled by default; pass `[self::OPTION_LOAD_SCHEMA => false]` as this hook's own options (keyed
+ * by its own service id in the bootstrap options array) to skip it.
  */
 final class SchemaHook implements HookInterface
 {
+    public const OPTION_LOAD_SCHEMA = 'load_schema';
+
     private IbexaTestKernelInterface $kernel;
 
     private LegacySchemaImporter $schemaImporter;
@@ -39,14 +41,14 @@ final class SchemaHook implements HookInterface
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->define('load_schema')
+        $resolver->define(self::OPTION_LOAD_SCHEMA)
             ->default(true)
             ->allowedTypes('bool');
     }
 
     public function __invoke(array $options): void
     {
-        if (!$options['load_schema']) {
+        if (!$options[self::OPTION_LOAD_SCHEMA]) {
             return;
         }
 
