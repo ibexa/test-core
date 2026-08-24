@@ -8,11 +8,11 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
-use Ibexa\Test\Core\Bootstrapper\FixtureHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaHook;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
-use Ibexa\Test\Core\Bootstrapper\PurgeIndexHook;
-use Ibexa\Test\Core\Bootstrapper\SchemaHook;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
