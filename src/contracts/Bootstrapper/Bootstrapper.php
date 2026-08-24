@@ -92,7 +92,15 @@ final class Bootstrapper
 
     private static function getHooksExecutor(ContainerInterface $testContainer): HooksExecutorInterface
     {
-        $executor = $testContainer->get(HooksExecutorInterface::class);
+        try {
+            $executor = $testContainer->get(HooksExecutorInterface::class);
+        } catch (ServiceNotFoundException $e) {
+            throw new LogicException(sprintf(
+                'Could not find service "%s". Try updating the "framework.test" config to "true".',
+                HooksExecutorInterface::class,
+            ), 0, $e);
+        }
+
         if (!$executor instanceof HooksExecutorInterface) {
             throw new LogicException(sprintf(
                 'Invalid executor service acquired. Expected %s, received %s.',
