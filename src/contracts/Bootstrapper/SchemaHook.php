@@ -8,17 +8,11 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Imports the legacy raw-SQL schema files exposed by the test kernel via
- * {@see IbexaTestKernelInterface::getSchemaFiles()}.
- *
- * Typed against the interface, not the concrete Ibexa\Contracts\Test\Core\IbexaTestKernel: Symfony's
- * autowiring only resolves the synthetic "kernel" service by the interfaces it implements, not by
- * intermediate parent classes.
+ * Imports the legacy raw-SQL schema files exposed by {@see SchemaFilesProviderInterface}.
  *
  * Enabled by default; pass `[self::OPTION_LOAD_SCHEMA => false]` as this hook's own options (keyed
  * by its own service id in the bootstrap options array) to skip it.
@@ -27,15 +21,15 @@ final class SchemaHook implements HookInterface
 {
     public const OPTION_LOAD_SCHEMA = 'load_schema';
 
-    private IbexaTestKernelInterface $kernel;
+    private SchemaFilesProviderInterface $provider;
 
     private LegacySchemaImporter $schemaImporter;
 
     public function __construct(
-        IbexaTestKernelInterface $kernel,
+        SchemaFilesProviderInterface $provider,
         LegacySchemaImporter $schemaImporter
     ) {
-        $this->kernel = $kernel;
+        $this->provider = $provider;
         $this->schemaImporter = $schemaImporter;
     }
 
@@ -52,7 +46,7 @@ final class SchemaHook implements HookInterface
             return;
         }
 
-        foreach ($this->kernel->getSchemaFiles() as $file) {
+        foreach ($this->provider->getSchemaFiles() ?? [] as $file) {
             $this->schemaImporter->importSchema($file);
         }
     }

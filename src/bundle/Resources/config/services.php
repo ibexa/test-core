@@ -9,12 +9,27 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaFilesProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaHook;
+use Ibexa\Test\Core\Bootstrapper\FixtureKernelMethodProvider;
+use Ibexa\Test\Core\Bootstrapper\FixtureParameterProvider;
+use Ibexa\Test\Core\Bootstrapper\FixtureProviderChain;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
+use Ibexa\Test\Core\Bootstrapper\SchemaFilesKernelMethodProvider;
+use Ibexa\Test\Core\Bootstrapper\SchemaFilesParameterProvider;
+use Ibexa\Test\Core\Bootstrapper\SchemaFilesProviderChain;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->parameters()
+        // null (not []): an unset/unconfigured parameter must be distinguishable from a consumer
+        // deliberately configuring an empty list, since only the latter should stop the fallback
+        // chain in *ProviderChain — see SchemaFilesProviderInterface's docblock.
+        ->set('ibexa.test.schema_files', null)
+        ->set('ibexa.test.fixture_files', null);
+
     $services = $containerConfigurator->services();
     $services->defaults()
         ->autowire()
@@ -32,12 +47,34 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         // wrapper re-sorts entries alphabetically by key, destroying the priority order hooks rely on.
         ->arg('$hooks', tagged_iterator('ibexa.test.bootstrapper.hook', 'id'));
 
-    $services->set(SchemaHook::class)
+    $services->set(SchemaFilesKernelMethodProvider::class)
         ->arg('$kernel', service('kernel'))
+        ->tag(SchemaFilesProviderInterface::TAG, ['priority' => 0]);
+
+    $services->set(SchemaFilesParameterProvider::class)
+        ->arg('$schemaFiles', '%ibexa.test.schema_files%')
+        ->tag(SchemaFilesProviderInterface::TAG, ['priority' => 100]);
+
+    $services->set(SchemaFilesProviderChain::class)
+        ->arg('$providers', tagged_iterator(SchemaFilesProviderInterface::TAG));
+
+    $services->set(FixtureKernelMethodProvider::class)
+        ->arg('$kernel', service('kernel'))
+        ->tag(FixtureProviderInterface::TAG, ['priority' => 0]);
+
+    $services->set(FixtureParameterProvider::class)
+        ->arg('$fixtureFiles', '%ibexa.test.fixture_files%')
+        ->tag(FixtureProviderInterface::TAG, ['priority' => 100]);
+
+    $services->set(FixtureProviderChain::class)
+        ->arg('$providers', tagged_iterator(FixtureProviderInterface::TAG));
+
+    $services->set(SchemaHook::class)
+        ->arg('$provider', service(SchemaFilesProviderChain::class))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 1000]);
 
     $services->set(FixtureHook::class)
-        ->arg('$kernel', service('kernel'))
+        ->arg('$provider', service(FixtureProviderChain::class))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 900]);
 
     $services->set(PurgeIndexHook::class)
