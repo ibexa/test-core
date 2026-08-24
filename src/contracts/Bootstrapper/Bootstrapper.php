@@ -15,7 +15,6 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * @experimental
@@ -62,55 +61,45 @@ final class Bootstrapper
 
         $this->prepareDatabase($kernel, $options);
 
-        $testContainer = self::getContainer($kernel);
-        self::getHooksExecutor($testContainer)->execute($options);
+        $testContainer = self::getService($kernel->getContainer(), 'test.service_container', ContainerInterface::class);
+        $hooksExecutor = self::getService($testContainer, HooksExecutorInterface::class, HooksExecutorInterface::class);
+        $hooksExecutor->execute($options);
 
         return $kernel;
     }
 
-    private static function getContainer(KernelInterface $kernel): ContainerInterface
+    /**
+     * Fetches a service and asserts its type, in one place, so the "missing service" and
+     * "wrong type" error messages can't drift out of sync between call sites the way
+     * getContainer()'s and getHooksExecutor()'s hand-written copies of this once did.
+     *
+     * @template T of object
+     *
+     * @param class-string<T> $expectedType
+     *
+     * @return T
+     */
+    private static function getService(ContainerInterface $container, string $id, string $expectedType): object
     {
         try {
-            $container = $kernel->getContainer()->get('test.service_container');
-        } catch (ServiceNotFoundException $e) {
-            throw new LogicException(
-                'Could not find service "test.service_container". Try updating the "framework.test" config to "true".',
-                0,
-                $e,
-            );
-        }
-
-        if (!$container instanceof ContainerInterface) {
-            throw new LogicException(sprintf(
-                'Expected service "test.service_container" to be an instance of "%s", got "%s".',
-                ContainerInterface::class,
-                get_debug_type($container),
-            ));
-        }
-
-        return $container;
-    }
-
-    private static function getHooksExecutor(ContainerInterface $testContainer): HooksExecutorInterface
-    {
-        try {
-            $executor = $testContainer->get(HooksExecutorInterface::class);
+            $service = $container->get($id);
         } catch (ServiceNotFoundException $e) {
             throw new LogicException(sprintf(
                 'Could not find service "%s". Try updating the "framework.test" config to "true".',
-                HooksExecutorInterface::class,
+                $id,
             ), 0, $e);
         }
 
-        if (!$executor instanceof HooksExecutorInterface) {
+        if (!$service instanceof $expectedType) {
             throw new LogicException(sprintf(
-                'Invalid executor service acquired. Expected %s, received %s.',
-                HooksExecutorInterface::class,
-                get_debug_type($executor),
+                'Expected service "%s" to be an instance of "%s", got "%s".',
+                $id,
+                $expectedType,
+                get_debug_type($service),
             ));
         }
 
-        return $executor;
+        return $service;
     }
 
     /**
