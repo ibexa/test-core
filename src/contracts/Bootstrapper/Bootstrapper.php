@@ -121,15 +121,18 @@ final class Bootstrapper
         $application->setAutoExit(false);
         $application->setCatchExceptions(false);
 
-        $databaseUrl = getenv('DATABASE_URL');
-        if ($databaseUrl !== false && !str_starts_with($databaseUrl, 'sqlite')) {
+        // $_ENV takes precedence to match doctrine.php's own source of truth for this value — it
+        // reads $_ENV directly, not getenv(), so a DATABASE_URL set there without also calling
+        // putenv() (e.g. via Symfony's Dotenv without usePutenv()) still resolves consistently here.
+        $databaseUrl = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
+        if (is_string($databaseUrl) && !str_starts_with($databaseUrl, 'sqlite')) {
             $application->run(new ArrayInput([
                 'command' => 'doctrine:database:drop',
                 '--if-exists' => '1',
                 '--force' => '1',
                 '--quiet' => true,
             ]));
-        } elseif ($databaseUrl !== false) {
+        } elseif (is_string($databaseUrl)) {
             $sqliteFile = self::getSqliteFilePath($databaseUrl);
             if ($sqliteFile !== null && file_exists($sqliteFile)) {
                 unlink($sqliteFile);
@@ -152,14 +155,21 @@ final class Bootstrapper
     }
 
     /**
-     * Extracts the filesystem path (relative to the current working directory, matching Doctrine's own
-     * "sqlite://i@i/path/to/file.db" convention) out of a sqlite DATABASE_URL. Returns null for
-     * "sqlite://:memory:", which has no file to clean up.
+     * Extracts the filesystem path out of a sqlite DATABASE_URL, matching Doctrine's own
+     * "sqlite://i@i/path/to/file.db" convention: the URL's own leading slash (the one separating
+     * the fake "i@i" host from the path) is stripped, leaving the path as configured — relative to
+     * the current working directory for a relative path, or, if the configured path is itself
+     * absolute (e.g. "sqlite://i@i/%kernel.project_dir%/var/data.db"), still absolute, since only
+     * one slash is stripped rather than every leading slash. Returns null for "sqlite://:memory:",
+     * which has no file to clean up.
      */
     private static function getSqliteFilePath(string $databaseUrl): ?string
     {
         $path = parse_url($databaseUrl, PHP_URL_PATH);
+        if (!is_string($path)) {
+            return null;
+        }
 
-        return is_string($path) ? ltrim($path, '/') : null;
+        return str_starts_with($path, '/') ? substr($path, 1) : $path;
     }
 }
