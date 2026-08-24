@@ -29,8 +29,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * `$options` is a top-level array keyed by FQCN (or, for a hook contributed by a downstream bundle,
  * its own service id) — each key's own sub-array is resolved against that key's own OptionsResolver,
  * and any key that isn't recognized makes the whole array fail to resolve, e.g.:
- *  - self::class => [self::OPTION_SCHEMA_UPDATE => false]: Bootstrapper's own options — currently
- *    just whether to run `doctrine:schema:update` against the ORM-mapped schema. Not read by any Hook.
+ *  - self::class => [self::OPTION_SCHEMA_UPDATE => false]: Bootstrapper's own options —
+ *    whether to run `doctrine:schema:update` against the ORM-mapped schema, and whether to shut the
+ *    kernel down before returning it. Not read by any Hook.
  *  - HookClass::class => [...]: each hook's own options, resolved against whatever that hook
  *    declares in {@see HookInterface::configureOptions()}. For example:
  *      - DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => false]
@@ -45,10 +46,12 @@ final class Bootstrapper
 {
     public const OPTION_SCHEMA_UPDATE = 'schema_update';
 
+    public const OPTION_SHUTDOWN_KERNEL = 'shutdown_kernel';
+
     /**
      * @param array<string, mixed> $options
      */
-    public function __invoke(
+    public function bootstrap(
         ?string $kernelClass = null,
         array $options = []
     ): IbexaTestKernel {
@@ -68,9 +71,14 @@ final class Bootstrapper
         $hooksExecutor = self::getService($testContainer, HooksExecutorInterface::class, HooksExecutorInterface::class);
 
         $options = self::resolveOptions($hooksExecutor, $options);
+        $ownOptions = $options[self::class];
 
-        $this->prepareDatabase($kernel, $options[self::class]);
+        $this->prepareDatabase($kernel, $ownOptions);
         $hooksExecutor->execute($options);
+
+        if ($ownOptions[self::OPTION_SHUTDOWN_KERNEL]) {
+            $kernel->shutdown();
+        }
 
         return $kernel;
     }
@@ -93,6 +101,9 @@ final class Bootstrapper
             ->normalize(static function (Options $options, array $value): array {
                 $ownResolver = new OptionsResolver();
                 $ownResolver->define(self::OPTION_SCHEMA_UPDATE)
+                    ->default(true)
+                    ->allowedTypes('bool');
+                $ownResolver->define(self::OPTION_SHUTDOWN_KERNEL)
                     ->default(true)
                     ->allowedTypes('bool');
 
@@ -139,7 +150,7 @@ final class Bootstrapper
 
     /**
      * @param array<string, mixed> $ownOptions this class's own options, already resolved against
-     *                                          the resolver built in {@see self::__invoke()}
+     *                                          the resolver built in {@see self::bootstrap()}
      */
     private function prepareDatabase(IbexaTestKernel $kernel, array $ownOptions): void
     {

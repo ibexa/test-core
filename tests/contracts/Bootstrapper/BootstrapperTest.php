@@ -24,7 +24,12 @@ final class BootstrapperTest extends TestCase
     {
         $resolved = $this->resolveOptions($this->hooksExecutorDefiningNothingExtra(), []);
 
-        self::assertSame([Bootstrapper::class => [Bootstrapper::OPTION_SCHEMA_UPDATE => true]], $resolved);
+        self::assertSame([
+            Bootstrapper::class => [
+                Bootstrapper::OPTION_SCHEMA_UPDATE => true,
+                Bootstrapper::OPTION_SHUTDOWN_KERNEL => true,
+            ],
+        ], $resolved);
     }
 
     public function testResolvesItsOwnOptionsAlongsideHookOptions(): void
@@ -35,12 +40,18 @@ final class BootstrapperTest extends TestCase
         });
 
         $resolved = $this->resolveOptions($hooksExecutor, [
-            Bootstrapper::class => [Bootstrapper::OPTION_SCHEMA_UPDATE => false],
+            Bootstrapper::class => [
+                Bootstrapper::OPTION_SCHEMA_UPDATE => false,
+                Bootstrapper::OPTION_SHUTDOWN_KERNEL => false,
+            ],
             'some.hook.id' => ['enabled' => false],
         ]);
 
         self::assertSame([
-            Bootstrapper::class => [Bootstrapper::OPTION_SCHEMA_UPDATE => false],
+            Bootstrapper::class => [
+                Bootstrapper::OPTION_SCHEMA_UPDATE => false,
+                Bootstrapper::OPTION_SHUTDOWN_KERNEL => false,
+            ],
             'some.hook.id' => ['enabled' => false],
         ], $resolved);
     }
