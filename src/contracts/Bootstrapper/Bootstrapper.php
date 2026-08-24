@@ -97,8 +97,11 @@ final class Bootstrapper
                 '--force' => '1',
                 '--quiet' => true,
             ]));
-        } elseif (file_exists('./test.db')) {
-            unlink('./test.db');
+        } elseif ($databaseUrl !== false) {
+            $sqliteFile = self::getSqliteFilePath($databaseUrl);
+            if ($sqliteFile !== null && file_exists($sqliteFile)) {
+                unlink($sqliteFile);
+            }
         }
 
         $application->run(new ArrayInput([
@@ -114,5 +117,17 @@ final class Bootstrapper
                 '--quiet' => true,
             ]));
         }
+    }
+
+    /**
+     * Extracts the filesystem path (relative to the current working directory, matching Doctrine's own
+     * "sqlite://i@i/path/to/file.db" convention) out of a sqlite DATABASE_URL. Returns null for
+     * "sqlite://:memory:", which has no file to clean up.
+     */
+    private static function getSqliteFilePath(string $databaseUrl): ?string
+    {
+        $path = parse_url($databaseUrl, PHP_URL_PATH);
+
+        return is_string($path) ? ltrim($path, '/') : null;
     }
 }
