@@ -10,6 +10,7 @@ namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -126,12 +127,12 @@ final class Bootstrapper
         // putenv() (e.g. via Symfony's Dotenv without usePutenv()) still resolves consistently here.
         $databaseUrl = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
         if (is_string($databaseUrl) && !str_starts_with($databaseUrl, 'sqlite')) {
-            $application->run(new ArrayInput([
+            self::runCommand($application, [
                 'command' => 'doctrine:database:drop',
                 '--if-exists' => '1',
                 '--force' => '1',
                 '--quiet' => true,
-            ]));
+            ]);
         } elseif (is_string($databaseUrl)) {
             $sqliteFile = self::getSqliteFilePath($databaseUrl);
             if ($sqliteFile !== null && file_exists($sqliteFile)) {
@@ -139,18 +140,35 @@ final class Bootstrapper
             }
         }
 
-        $application->run(new ArrayInput([
+        self::runCommand($application, [
             'command' => 'doctrine:database:create',
             '--quiet' => true,
-        ]));
+        ]);
 
         if ($options['schema_update'] ?? true) {
-            $application->run(new ArrayInput([
+            self::runCommand($application, [
                 'command' => 'doctrine:schema:update',
                 '--em' => 'ibexa_default',
                 '--force' => true,
                 '--quiet' => true,
-            ]));
+            ]);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     *
+     * @throws \Exception
+     */
+    private static function runCommand(Application $application, array $parameters): void
+    {
+        $exitCode = $application->run(new ArrayInput($parameters));
+        if ($exitCode !== 0) {
+            throw new RuntimeException(sprintf(
+                'Command "%s" failed with exit code %d.',
+                $parameters['command'],
+                $exitCode,
+            ));
         }
     }
 
