@@ -162,12 +162,29 @@ final class Bootstrapper
      * absolute (e.g. "sqlite://i@i/%kernel.project_dir%/var/data.db"), still absolute, since only
      * one slash is stripped rather than every leading slash. Returns null for "sqlite://:memory:",
      * which has no file to clean up.
+     *
+     * @throws \LogicException if $databaseUrl uses one of Doctrine's other valid sqlite DSN forms
+     *                         ("sqlite:///path" or "sqlite:////abs/path") — Doctrine's own
+     *                         DriverManager special-cases and rewrites these before connecting, but
+     *                         PHP's parse_url() can't parse them at all (returns false, not null),
+     *                         so the file to clean up can't be determined; silently skipping
+     *                         cleanup here would leave stale data for the next bootstrap run.
      */
     private static function getSqliteFilePath(string $databaseUrl): ?string
     {
         $path = parse_url($databaseUrl, PHP_URL_PATH);
-        if (!is_string($path)) {
+
+        if ($path === null) {
             return null;
+        }
+
+        if ($path === false) {
+            throw new LogicException(sprintf(
+                'Could not determine a file path from sqlite DATABASE_URL "%s": PHP\'s parse_url()'
+                . ' can\'t parse the "sqlite:///path" or "sqlite:////abs/path" DSN forms, even though'
+                . ' Doctrine itself accepts them. Use the "sqlite://i@i/path/to/file.db" convention instead.',
+                $databaseUrl,
+            ));
         }
 
         return str_starts_with($path, '/') ? substr($path, 1) : $path;
