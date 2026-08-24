@@ -29,8 +29,9 @@ final class PurgeIndexHook implements HookInterface
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['purge_index' => false]);
-        $resolver->setAllowedTypes('purge_index', 'bool');
+        $resolver->define('purge_index')
+            ->default(false)
+            ->allowedTypes('bool');
     }
 
     public function __invoke(array $options): void
