@@ -62,7 +62,7 @@ final class Bootstrapper
         $this->prepareDatabase($kernel, $options);
 
         $testContainer = self::getContainer($kernel);
-        $testContainer->get(HooksExecutorInterface::class)->execute($options);
+        self::getHooksExecutor($testContainer)->execute($options);
 
         return $kernel;
     }
@@ -70,7 +70,7 @@ final class Bootstrapper
     private static function getContainer(KernelInterface $kernel): ContainerInterface
     {
         try {
-            return $kernel->getContainer()->get('test.service_container');
+            $container = $kernel->getContainer()->get('test.service_container');
         } catch (ServiceNotFoundException $e) {
             throw new LogicException(
                 'Could not find service "test.service_container". Try updating the "framework.test" config to "true".',
@@ -78,6 +78,30 @@ final class Bootstrapper
                 $e,
             );
         }
+
+        if (!$container instanceof ContainerInterface) {
+            throw new LogicException(sprintf(
+                'Expected service "test.service_container" to be an instance of "%s", got "%s".',
+                ContainerInterface::class,
+                get_debug_type($container),
+            ));
+        }
+
+        return $container;
+    }
+
+    private static function getHooksExecutor(ContainerInterface $testContainer): HooksExecutorInterface
+    {
+        $executor = $testContainer->get(HooksExecutorInterface::class);
+        if (!$executor instanceof HooksExecutorInterface) {
+            throw new LogicException(sprintf(
+                'Invalid executor service acquired. Expected %s, received %s.',
+                HooksExecutorInterface::class,
+                get_debug_type($executor),
+            ));
+        }
+
+        return $executor;
     }
 
     /**
