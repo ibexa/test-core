@@ -6,10 +6,9 @@
  */
 declare(strict_types=1);
 
-namespace Ibexa\Test\Core\Bootstrapper;
+namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Core\Search\VersatileHandler;
-use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**

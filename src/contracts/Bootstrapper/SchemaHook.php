@@ -6,10 +6,9 @@
  */
 declare(strict_types=1);
 
-namespace Ibexa\Test\Core\Bootstrapper;
+namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
