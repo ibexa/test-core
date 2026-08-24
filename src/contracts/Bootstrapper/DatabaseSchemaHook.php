@@ -17,7 +17,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * Enabled by default; pass `[self::OPTION_LOAD_SCHEMA => false]` as this hook's own options (keyed
  * by its own service id in the bootstrap options array) to skip it.
  */
-final class SchemaHook implements HookInterface
+final class DatabaseSchemaHook implements HookInterface
 {
     public const OPTION_LOAD_SCHEMA = 'load_schema';
 

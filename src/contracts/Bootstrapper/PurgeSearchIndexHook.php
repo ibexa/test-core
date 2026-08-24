@@ -17,7 +17,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * Disabled by default; pass `[self::OPTION_PURGE_INDEX => true]` as this hook's own options (keyed
  * by its own service id in the bootstrap options array) to enable it.
  */
-final class PurgeIndexHook implements HookInterface
+final class PurgeSearchIndexHook implements HookInterface
 {
     public const OPTION_PURGE_INDEX = 'purge_index';
 
