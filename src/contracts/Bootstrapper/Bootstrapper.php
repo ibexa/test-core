@@ -12,6 +12,9 @@ use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * @experimental
@@ -53,17 +56,28 @@ final class Bootstrapper
             ));
         }
 
-        /** @var \Ibexa\Contracts\Test\Core\IbexaTestKernel $kernel */
         $kernel = new $kernelClass('test', true);
         $kernel->boot();
 
         $this->prepareDatabase($kernel, $options);
 
-        /** @var \Psr\Container\ContainerInterface $testContainer */
-        $testContainer = $kernel->getContainer()->get('test.service_container');
+        $testContainer = self::getContainer($kernel);
         $testContainer->get(HooksExecutorInterface::class)->execute($options);
 
         return $kernel;
+    }
+
+    private static function getContainer(KernelInterface $kernel): ContainerInterface
+    {
+        try {
+            return $kernel->getContainer()->get('test.service_container');
+        } catch (ServiceNotFoundException $e) {
+            throw new LogicException(
+                'Could not find service "test.service_container". Try updating the "framework.test" config to "true".',
+                0,
+                $e,
+            );
+        }
     }
 
     /**
