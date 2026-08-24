@@ -13,7 +13,6 @@ use Doctrine\DBAL\Connection;
 use FOS\JsRoutingBundle\FOSJsRoutingBundle;
 use Ibexa\Bundle\Core\IbexaCoreBundle;
 use Ibexa\Bundle\LegacySearchEngine\IbexaLegacySearchEngineBundle;
-use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
@@ -55,6 +54,11 @@ use Symfony\Component\HttpKernel\Kernel;
  * ## Adding bundles
  *
  * Bundles can be added by extending IbexaTestKernel::registerBundles() method (just like in any Kernel).
+ *
+ * This kernel does not register {@see \Ibexa\Bundle\Test\Core\IbexaTestCoreBundle} itself, so a kernel
+ * that wants to use {@see \Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper} (and therefore needs
+ * {@see \Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface} and the built-in hooks it
+ * registers) must `yield new IbexaTestCoreBundle();` from its own registerBundles() override.
  *
  * ## Exposing your services
  *
@@ -137,7 +141,6 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
 
     public function registerBundles(): iterable
     {
-        yield new IbexaTestCoreBundle();
         yield new SecurityBundle();
         yield new IbexaCoreBundle();
         yield new IbexaLegacySearchEngineBundle();
