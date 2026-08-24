@@ -15,6 +15,8 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\OptionsResolver\Options;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * @experimental
@@ -24,12 +26,13 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * else a bundle present in the kernel contributes — e.g. ibexa/migrations tags its own hook to run
  * migrations, with no changes needed here).
  *
- * `$options` is a top-level array with two kinds of keys:
- *  - schema_update (bool, default true): Bootstrapper's own option — run `doctrine:schema:update`
- *    against the ORM-mapped schema. Not read by any Hook.
- *  - HookClass::class => [...]: each hook's own options, under a key equal to that hook's own
- *    service id (which, for the built-in hooks below, is their own FQCN), resolved against whatever
- *    that hook declares in {@see HookInterface::configureOptions()}. For example:
+ * `$options` is a top-level array keyed by FQCN (or, for a hook contributed by a downstream bundle,
+ * its own service id) — each key's own sub-array is resolved against that key's own OptionsResolver,
+ * and any key that isn't recognized makes the whole array fail to resolve, e.g.:
+ *  - self::class => [self::OPTION_SCHEMA_UPDATE => false]: Bootstrapper's own options — currently
+ *    just whether to run `doctrine:schema:update` against the ORM-mapped schema. Not read by any Hook.
+ *  - HookClass::class => [...]: each hook's own options, resolved against whatever that hook
+ *    declares in {@see HookInterface::configureOptions()}. For example:
  *      - DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => false]
  *      - FixtureHook::class => [FixtureHook::OPTION_LOAD_FIXTURES => false]
  *      - PurgeSearchIndexHook::class => [PurgeSearchIndexHook::OPTION_PURGE_INDEX => true]
@@ -40,6 +43,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 final class Bootstrapper
 {
+    public const OPTION_SCHEMA_UPDATE = 'schema_update';
+
     /**
      * @param array<string, mixed> $options
      */
@@ -59,13 +64,43 @@ final class Bootstrapper
         $kernel = new $kernelClass('test', true);
         $kernel->boot();
 
-        $this->prepareDatabase($kernel, $options);
-
         $testContainer = self::getService($kernel->getContainer(), 'test.service_container', ContainerInterface::class);
         $hooksExecutor = self::getService($testContainer, HooksExecutorInterface::class, HooksExecutorInterface::class);
+
+        $options = self::resolveOptions($hooksExecutor, $options);
+
+        $this->prepareDatabase($kernel, $options[self::class]);
         $hooksExecutor->execute($options);
 
         return $kernel;
+    }
+
+    /**
+     * Builds the top-level resolver — self::class for Bootstrapper's own options, plus whatever
+     * {@see HooksExecutorInterface::configureOptions()} defines for each registered hook — and
+     * resolves $options against it in one call, so any unrecognized key throws.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    private static function resolveOptions(HooksExecutorInterface $hooksExecutor, array $options): array
+    {
+        $resolver = new OptionsResolver();
+        $resolver->define(self::class)
+            ->default([])
+            ->allowedTypes('array')
+            ->normalize(static function (Options $options, array $value): array {
+                $ownResolver = new OptionsResolver();
+                $ownResolver->define(self::OPTION_SCHEMA_UPDATE)
+                    ->default(true)
+                    ->allowedTypes('bool');
+
+                return $ownResolver->resolve($value);
+            });
+        $hooksExecutor->configureOptions($resolver);
+
+        return $resolver->resolve($options);
     }
 
     /**
@@ -103,9 +138,10 @@ final class Bootstrapper
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $ownOptions this class's own options, already resolved against
+     *                                          the resolver built in {@see self::__invoke()}
      */
-    private function prepareDatabase(IbexaTestKernel $kernel, array $options): void
+    private function prepareDatabase(IbexaTestKernel $kernel, array $ownOptions): void
     {
         $application = new Application($kernel);
         $application->setAutoExit(false);
@@ -134,7 +170,7 @@ final class Bootstrapper
             '--quiet' => true,
         ]);
 
-        if ($options['schema_update'] ?? true) {
+        if ($ownOptions[self::OPTION_SCHEMA_UPDATE]) {
             self::runCommand($application, [
                 'command' => 'doctrine:schema:update',
                 '--em' => 'ibexa_default',

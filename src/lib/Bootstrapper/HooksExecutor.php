@@ -10,6 +10,7 @@ namespace Ibexa\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
+use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class HooksExecutor implements HooksExecutorInterface
@@ -28,13 +29,25 @@ final class HooksExecutor implements HooksExecutorInterface
         $this->hooks = $hooks;
     }
 
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        foreach ($this->hooks as $hookId => $hook) {
+            $resolver->define($hookId)
+                ->default([])
+                ->allowedTypes('array')
+                ->normalize(static function (Options $options, array $value) use ($hook): array {
+                    $hookResolver = new OptionsResolver();
+                    $hook->configureOptions($hookResolver);
+
+                    return $hookResolver->resolve($value);
+                });
+        }
+    }
+
     public function execute(array $options = []): void
     {
         foreach ($this->hooks as $hookId => $hook) {
-            $resolver = new OptionsResolver();
-            $hook->configureOptions($resolver);
-
-            $hook($resolver->resolve($options[$hookId] ?? []));
+            $hook($options[$hookId] ?? []);
         }
     }
 }

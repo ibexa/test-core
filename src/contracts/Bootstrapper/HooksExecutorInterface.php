@@ -8,21 +8,31 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
 /**
  * @experimental
  */
 interface HooksExecutorInterface
 {
     /**
-     * Runs every registered {@see HookInterface}, in tag-priority order. Each hook's own sub-array
-     * of $options — found under a top-level key equal to that hook's own service id, or an empty
-     * array if that key is absent — is resolved against the OptionsResolver that hook declares in
-     * {@see HookInterface::configureOptions()} before being passed to it.
+     * Declares, for every registered {@see HookInterface}, an option keyed by that hook's own
+     * service id — resolved against whatever that hook itself declares in
+     * {@see HookInterface::configureOptions()} — on the given resolver. Meant to be called on a
+     * resolver the caller also defines its own options on (e.g. Bootstrapper's own
+     * "schema_update"), so a single {@see OptionsResolver::resolve()} call validates the whole
+     * top-level options array at once and rejects any key that isn't recognized.
+     */
+    public function configureOptions(OptionsResolver $resolver): void;
+
+    /**
+     * Runs every registered {@see HookInterface}, in tag-priority order, passing each one its own
+     * sub-array of $options (found under a top-level key equal to that hook's own service id, or an
+     * empty array if that key is absent).
      *
-     * @param array<string, mixed> $options top-level array; each key is either a hook's own service
-     *                                       id (mapping to that hook's own options sub-array) or an
-     *                                       option belonging to the caller itself (e.g.
-     *                                       Bootstrapper's own "schema_update")
+     * @param array<string, mixed> $options top-level array, already resolved against a resolver
+     *                                       this class's own {@see self::configureOptions()} was
+     *                                       called on
      */
     public function execute(array $options = []): void;
 }
