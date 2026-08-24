@@ -23,6 +23,11 @@ use Ibexa\Test\Core\Bootstrapper\SchemaFilesParameterProvider;
 use Ibexa\Test\Core\Bootstrapper\SchemaFilesProviderChain;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
+    // Restores the drop-in extension point the old services.yaml's `imports: [{ resource:
+    // services/**.yaml }]` provided before this file replaced it — a YAML file placed under
+    // services/ is picked up automatically, no changes needed here.
+    $containerConfigurator->import('services/**.yaml', null, true);
+
     $containerConfigurator->parameters()
         // null (not []): an unset/unconfigured parameter must be distinguishable from a consumer
         // deliberately configuring an empty list, since only the latter should stop the fallback
