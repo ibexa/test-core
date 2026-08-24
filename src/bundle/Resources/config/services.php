@@ -8,12 +8,12 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
-use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaFilesProviderInterface;
-use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaHook;
 use Ibexa\Test\Core\Bootstrapper\FixtureKernelMethodProvider;
 use Ibexa\Test\Core\Bootstrapper\FixtureParameterProvider;
 use Ibexa\Test\Core\Bootstrapper\FixtureProviderChain;
@@ -77,7 +77,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(FixtureProviderChain::class)
         ->arg('$providers', tagged_iterator(FixtureProviderInterface::TAG));
 
-    $services->set(SchemaHook::class)
+    $services->set(DatabaseSchemaHook::class)
         ->arg('$provider', service(SchemaFilesProviderChain::class))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 1000]);
 
@@ -85,7 +85,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->arg('$provider', service(FixtureProviderChain::class))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 900]);
 
-    $services->set(PurgeIndexHook::class)
+    $services->set(PurgeSearchIndexHook::class)
         ->arg('$handler', service('ibexa.spi.search'))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 100]);
 };

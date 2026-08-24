@@ -30,9 +30,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *  - HookClass::class => [...]: each hook's own options, under a key equal to that hook's own
  *    service id (which, for the built-in hooks below, is their own FQCN), resolved against whatever
  *    that hook declares in {@see HookInterface::configureOptions()}. For example:
- *      - SchemaHook::class => [SchemaHook::OPTION_LOAD_SCHEMA => false]
+ *      - DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => false]
  *      - FixtureHook::class => [FixtureHook::OPTION_LOAD_FIXTURES => false]
- *      - PurgeIndexHook::class => [PurgeIndexHook::OPTION_PURGE_INDEX => true]
+ *      - PurgeSearchIndexHook::class => [PurgeSearchIndexHook::OPTION_PURGE_INDEX => true]
  *
  * Other hooks (including ones contributed by a downstream bundle, e.g. ibexa/migrations' own
  * MigrationHook) may define and read their own FQCN-keyed options sub-array the same way; this
