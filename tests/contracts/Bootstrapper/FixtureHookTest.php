@@ -13,6 +13,7 @@ use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -20,6 +21,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class FixtureHookTest extends TestCase
 {
+    use ExpectDeprecationTrait;
+
     public function testPostLoadFixturesOptionDefaultsToNull(): void
     {
         $hook = $this->hookReturningFixtures([]);
@@ -32,6 +35,9 @@ final class FixtureHookTest extends TestCase
         $hook($options);
     }
 
+    /**
+     * @group legacy
+     */
     public function testRunsPostLoadFixturesCallbackAfterImporting(): void
     {
         $called = false;
@@ -47,6 +53,9 @@ final class FixtureHookTest extends TestCase
         self::assertTrue($called);
     }
 
+    /**
+     * @group legacy
+     */
     public function testDoesNotRunPostLoadFixturesCallbackWhenFixtureLoadingIsDisabled(): void
     {
         $called = false;
@@ -63,27 +72,17 @@ final class FixtureHookTest extends TestCase
         self::assertFalse($called);
     }
 
+    /**
+     * @group legacy
+     */
     public function testPostLoadFixturesOptionIsDeprecated(): void
     {
-        $hook = $this->hookReturningFixtures([]);
-        $resolver = new OptionsResolver();
-        $hook->configureOptions($resolver);
+        $this->expectDeprecation('Since ibexa/test-core 4.6.0: The "post_load_fixtures" option is deprecated, register a separate hook (tagged "ibexa.test.bootstrapper.hook" with a lower priority than FixtureHook\'s) instead.');
 
-        $deprecations = [];
-        set_error_handler(static function (int $errno, string $errstr) use (&$deprecations): bool {
-            $deprecations[] = $errstr;
-
-            return true;
-        }, E_USER_DEPRECATED);
-
-        try {
-            $resolver->resolve([FixtureHook::OPTION_POST_LOAD_FIXTURES => static function (): void {
-            }]);
-        } finally {
-            restore_error_handler();
-        }
-
-        self::assertNotEmpty($deprecations);
+        $this->resolve($this->hookReturningFixtures([]), [
+            FixtureHook::OPTION_POST_LOAD_FIXTURES => static function (): void {
+            },
+        ]);
     }
 
     /**
@@ -96,7 +95,7 @@ final class FixtureHookTest extends TestCase
         $resolver = new OptionsResolver();
         $hook->configureOptions($resolver);
 
-        return @$resolver->resolve($options);
+        return $resolver->resolve($options);
     }
 
     /**

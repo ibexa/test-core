@@ -24,7 +24,8 @@
         "knplabs/knp-menu": "^3.3",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0",
-        "phpunit/phpunit": "^9"
+        "phpunit/phpunit": "^9",
+        "symfony/phpunit-bridge": "^5.4"
     },
     "autoload": {
         "psr-4": {
