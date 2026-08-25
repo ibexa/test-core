@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
+use function Ibexa\PolyfillPhp82\iterator_to_array;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
 
