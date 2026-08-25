@@ -102,6 +102,15 @@ final class BootstrapperTest extends TestCase
         ]);
     }
 
+    public function testSkipsDatabasePreparationEntirelyWhenOptedOut(): void
+    {
+        $this->databasePreparer->expects(self::never())->method('prepareDatabase');
+
+        $this->bootstrapper->bootstrap(null, [
+            Bootstrapper::class => [Bootstrapper::OPTION_PREPARE_DATABASE => false],
+        ]);
+    }
+
     public function testExecutesHooksWithTheFullyResolvedOptionsArray(): void
     {
         $this->hooksExecutor->method('configureOptions')->willReturnCallback(static function (OptionsResolver $resolver): void {
@@ -112,6 +121,7 @@ final class BootstrapperTest extends TestCase
             ->method('execute')
             ->with([
                 Bootstrapper::class => [
+                    Bootstrapper::OPTION_PREPARE_DATABASE => true,
                     Bootstrapper::OPTION_SCHEMA_UPDATE => true,
                     Bootstrapper::OPTION_SHUTDOWN_KERNEL => true,
                 ],

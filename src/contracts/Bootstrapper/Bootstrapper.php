@@ -31,8 +31,11 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * its own service id) — each key's own sub-array is resolved against that key's own OptionsResolver,
  * and any key that isn't recognized makes the whole array fail to resolve, e.g.:
  *  - self::class => [self::OPTION_SCHEMA_UPDATE => false]: Bootstrapper's own options —
- *    whether to run `doctrine:schema:update` against the ORM-mapped schema, and whether to shut the
- *    kernel down before returning it. Not read by any Hook.
+ *    whether to prepare a database at all, whether to run `doctrine:schema:update` against the
+ *    ORM-mapped schema, and whether to shut the kernel down before returning it. Not read by any
+ *    Hook. Pass [self::OPTION_PREPARE_DATABASE => false] for a package whose tests never touch the
+ *    database at all — this skips `doctrine:database:drop`/`doctrine:database:create` too, not just
+ *    schema/fixture import (which are separate, per-Hook options — see below).
  *  - HookClass::class => [...]: each hook's own options, resolved against whatever that hook
  *    declares in {@see HookInterface::configureOptions()}. For example:
  *      - DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => false]
@@ -45,6 +48,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class Bootstrapper
 {
+    public const OPTION_PREPARE_DATABASE = 'prepare_database';
+
     public const OPTION_SCHEMA_UPDATE = 'schema_update';
 
     public const OPTION_SHUTDOWN_KERNEL = 'shutdown_kernel';
@@ -78,7 +83,9 @@ final class Bootstrapper
         $options = self::resolveOptions($hooksExecutor, $options);
         $ownOptions = $options[self::class];
 
-        $this->databasePreparer->prepareDatabase($kernel, $ownOptions[self::OPTION_SCHEMA_UPDATE]);
+        if ($ownOptions[self::OPTION_PREPARE_DATABASE]) {
+            $this->databasePreparer->prepareDatabase($kernel, $ownOptions[self::OPTION_SCHEMA_UPDATE]);
+        }
         $hooksExecutor->execute($options);
 
         if ($ownOptions[self::OPTION_SHUTDOWN_KERNEL]) {
@@ -105,6 +112,9 @@ final class Bootstrapper
             ->allowedTypes('array')
             ->normalize(static function (Options $options, array $value): array {
                 $ownResolver = new OptionsResolver();
+                $ownResolver->define(self::OPTION_PREPARE_DATABASE)
+                    ->default(true)
+                    ->allowedTypes('bool');
                 $ownResolver->define(self::OPTION_SCHEMA_UPDATE)
                     ->default(true)
                     ->allowedTypes('bool');
