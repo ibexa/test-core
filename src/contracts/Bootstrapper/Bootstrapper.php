@@ -10,9 +10,6 @@ namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
-use RuntimeException;
-use Symfony\Bundle\FrameworkBundle\Console\Application;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\OptionsResolver\Options;
@@ -25,6 +22,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * database, and runs every registered {@see HookInterface} (schema import, fixture import, and whatever
  * else a bundle present in the kernel contributes — e.g. ibexa/migrations tags its own hook to run
  * migrations, with no changes needed here).
+ *
+ * Kernel creation and database preparation are delegated to {@see KernelProviderInterface} and
+ * {@see DatabasePreparerInterface}, both injectable via the constructor, defaulting to
+ * {@see KernelProvider} and {@see DatabasePreparer} (today's behavior) when nothing is passed.
  *
  * `$options` is a top-level array keyed by FQCN (or, for a hook contributed by a downstream bundle,
  * its own service id) — each key's own sub-array is resolved against that key's own OptionsResolver,
@@ -48,6 +49,18 @@ final class Bootstrapper
 
     public const OPTION_SHUTDOWN_KERNEL = 'shutdown_kernel';
 
+    private KernelProviderInterface $kernelProvider;
+
+    private DatabasePreparerInterface $databasePreparer;
+
+    public function __construct(
+        ?KernelProviderInterface $kernelProvider = null,
+        ?DatabasePreparerInterface $databasePreparer = null
+    ) {
+        $this->kernelProvider = $kernelProvider ?? new KernelProvider();
+        $this->databasePreparer = $databasePreparer ?? new DatabasePreparer();
+    }
+
     /**
      * @param array<string, mixed> $options
      *
@@ -57,17 +70,7 @@ final class Bootstrapper
         ?string $kernelClass = null,
         array $options = []
     ): IbexaTestKernel {
-        $kernelClass ??= $_ENV['KERNEL_CLASS'] ?? $_SERVER['KERNEL_CLASS'] ?? null;
-        if ($kernelClass === null || !is_a($kernelClass, IbexaTestKernel::class, true)) {
-            throw new LogicException(sprintf(
-                'The kernel class "%s" must be a subclass of "%s". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class.',
-                $kernelClass ?? 'null',
-                IbexaTestKernel::class,
-            ));
-        }
-
-        $kernel = new $kernelClass('test', true);
-        $kernel->boot();
+        $kernel = $this->kernelProvider->getKernel($kernelClass);
 
         $testContainer = self::getService($kernel->getContainer(), 'test.service_container', ContainerInterface::class);
         $hooksExecutor = self::getService($testContainer, HooksExecutorInterface::class, HooksExecutorInterface::class);
@@ -75,7 +78,7 @@ final class Bootstrapper
         $options = self::resolveOptions($hooksExecutor, $options);
         $ownOptions = $options[self::class];
 
-        $this->prepareDatabase($kernel, $ownOptions);
+        $this->databasePreparer->prepareDatabase($kernel, $ownOptions[self::OPTION_SCHEMA_UPDATE]);
         $hooksExecutor->execute($options);
 
         if ($ownOptions[self::OPTION_SHUTDOWN_KERNEL]) {
@@ -148,101 +151,5 @@ final class Bootstrapper
         }
 
         return $service;
-    }
-
-    /**
-     * @param array<string, mixed> $ownOptions this class's own options, already resolved against
-     *                                          the resolver built in {@see self::bootstrap()}
-     */
-    private function prepareDatabase(IbexaTestKernel $kernel, array $ownOptions): void
-    {
-        $application = new Application($kernel);
-        $application->setAutoExit(false);
-        $application->setCatchExceptions(false);
-
-        // $_ENV takes precedence to match doctrine.php's own source of truth for this value — it
-        // reads $_ENV directly, not getenv(), so a DATABASE_URL set there without also calling
-        // putenv() (e.g. via Symfony's Dotenv without usePutenv()) still resolves consistently here.
-        $databaseUrl = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
-        if (is_string($databaseUrl) && !str_starts_with($databaseUrl, 'sqlite')) {
-            self::runCommand($application, [
-                'command' => 'doctrine:database:drop',
-                '--if-exists' => '1',
-                '--force' => '1',
-                '--quiet' => true,
-            ]);
-        } elseif (is_string($databaseUrl)) {
-            $sqliteFile = self::getSqliteFilePath($databaseUrl);
-            if ($sqliteFile !== null && file_exists($sqliteFile)) {
-                unlink($sqliteFile);
-            }
-        }
-
-        self::runCommand($application, [
-            'command' => 'doctrine:database:create',
-            '--quiet' => true,
-        ]);
-
-        if ($ownOptions[self::OPTION_SCHEMA_UPDATE]) {
-            self::runCommand($application, [
-                'command' => 'doctrine:schema:update',
-                '--em' => 'ibexa_default',
-                '--force' => true,
-                '--quiet' => true,
-            ]);
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $parameters
-     *
-     * @throws \Exception
-     */
-    private static function runCommand(Application $application, array $parameters): void
-    {
-        $exitCode = $application->run(new ArrayInput($parameters));
-        if ($exitCode !== 0) {
-            throw new RuntimeException(sprintf(
-                'Command "%s" failed with exit code %d.',
-                $parameters['command'],
-                $exitCode,
-            ));
-        }
-    }
-
-    /**
-     * Extracts the filesystem path out of a sqlite DATABASE_URL, matching Doctrine's own
-     * "sqlite://i@i/path/to/file.db" convention: the URL's own leading slash (the one separating
-     * the fake "i@i" host from the path) is stripped, leaving the path as configured — relative to
-     * the current working directory for a relative path, or, if the configured path is itself
-     * absolute (e.g. "sqlite://i@i/%kernel.project_dir%/var/data.db"), still absolute, since only
-     * one slash is stripped rather than every leading slash. Returns null for "sqlite://:memory:",
-     * which has no file to clean up.
-     *
-     * @throws \LogicException if $databaseUrl uses one of Doctrine's other valid sqlite DSN forms
-     *                         ("sqlite:///path" or "sqlite:////abs/path") — Doctrine's own
-     *                         DriverManager special-cases and rewrites these before connecting, but
-     *                         PHP's parse_url() can't parse them at all (returns false, not null),
-     *                         so the file to clean up can't be determined; silently skipping
-     *                         cleanup here would leave stale data for the next bootstrap run.
-     */
-    private static function getSqliteFilePath(string $databaseUrl): ?string
-    {
-        $path = parse_url($databaseUrl, PHP_URL_PATH);
-
-        if ($path === null) {
-            return null;
-        }
-
-        if ($path === false) {
-            throw new LogicException(sprintf(
-                'Could not determine a file path from sqlite DATABASE_URL "%s": PHP\'s parse_url()'
-                . ' can\'t parse the "sqlite:///path" or "sqlite:////abs/path" DSN forms, even though'
-                . ' Doctrine itself accepts them. Use the "sqlite://i@i/path/to/file.db" convention instead.',
-                $databaseUrl,
-            ));
-        }
-
-        return str_starts_with($path, '/') ? substr($path, 1) : $path;
     }
 }

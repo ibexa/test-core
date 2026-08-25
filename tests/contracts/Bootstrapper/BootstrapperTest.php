@@ -9,12 +9,12 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabasePreparerInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
-use LogicException;
+use Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface;
+use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use RuntimeException;
-use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -23,155 +23,135 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class BootstrapperTest extends TestCase
 {
-    public function testDefaultsItsOwnOptionsWhenNotProvided(): void
-    {
-        $resolved = $this->resolveOptions($this->hooksExecutorDefiningNothingExtra(), []);
+    /**
+     * @var \Ibexa\Contracts\Test\Core\IbexaTestKernel&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $kernel;
 
-        self::assertSame([
-            Bootstrapper::class => [
-                Bootstrapper::OPTION_SCHEMA_UPDATE => true,
-                Bootstrapper::OPTION_SHUTDOWN_KERNEL => true,
-            ],
-        ], $resolved);
+    /**
+     * @var \Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $hooksExecutor;
+
+    /**
+     * @var \Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $kernelProvider;
+
+    /**
+     * @var \Ibexa\Contracts\Test\Core\Bootstrapper\DatabasePreparerInterface&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $databasePreparer;
+
+    private Bootstrapper $bootstrapper;
+
+    protected function setUp(): void
+    {
+        $testContainer = $this->createMock(ContainerInterface::class);
+        $this->hooksExecutor = $this->createMock(HooksExecutorInterface::class);
+        $this->hooksExecutor->method('configureOptions')->willReturnCallback(static function (OptionsResolver $resolver): void {
+        });
+        $testContainer->method('get')->with(HooksExecutorInterface::class)->willReturn($this->hooksExecutor);
+
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->with('test.service_container')->willReturn($testContainer);
+
+        $this->kernel = $this->createMock(IbexaTestKernel::class);
+        $this->kernel->method('getContainer')->willReturn($container);
+
+        $this->kernelProvider = $this->createMock(KernelProviderInterface::class);
+        $this->kernelProvider->method('getKernel')->willReturn($this->kernel);
+
+        $this->databasePreparer = $this->createMock(DatabasePreparerInterface::class);
+
+        $this->bootstrapper = new Bootstrapper($this->kernelProvider, $this->databasePreparer);
     }
 
-    public function testResolvesItsOwnOptionsAlongsideHookOptions(): void
+    public function testDelegatesKernelResolutionToTheProviderWithTheGivenKernelClass(): void
     {
-        $hooksExecutor = $this->createMock(HooksExecutorInterface::class);
-        $hooksExecutor->method('configureOptions')->willReturnCallback(static function (OptionsResolver $resolver): void {
+        $this->kernelProvider->expects(self::once())
+            ->method('getKernel')
+            ->with('My\\Kernel')
+            ->willReturn($this->kernel);
+
+        $this->bootstrapper->bootstrap('My\\Kernel');
+    }
+
+    public function testReturnsTheKernelObtainedFromTheProvider(): void
+    {
+        self::assertSame($this->kernel, $this->bootstrapper->bootstrap());
+    }
+
+    public function testPreparesTheDatabaseWithTheDefaultSchemaUpdateOption(): void
+    {
+        $this->databasePreparer->expects(self::once())
+            ->method('prepareDatabase')
+            ->with($this->kernel, true);
+
+        $this->bootstrapper->bootstrap();
+    }
+
+    public function testPreparesTheDatabaseWithSchemaUpdateDisabledWhenOptedOut(): void
+    {
+        $this->databasePreparer->expects(self::once())
+            ->method('prepareDatabase')
+            ->with($this->kernel, false);
+
+        $this->bootstrapper->bootstrap(null, [
+            Bootstrapper::class => [Bootstrapper::OPTION_SCHEMA_UPDATE => false],
+        ]);
+    }
+
+    public function testExecutesHooksWithTheFullyResolvedOptionsArray(): void
+    {
+        $this->hooksExecutor->method('configureOptions')->willReturnCallback(static function (OptionsResolver $resolver): void {
             $resolver->define('some.hook.id')->default([])->allowedTypes('array');
         });
 
-        $resolved = $this->resolveOptions($hooksExecutor, [
-            Bootstrapper::class => [
-                Bootstrapper::OPTION_SCHEMA_UPDATE => false,
-                Bootstrapper::OPTION_SHUTDOWN_KERNEL => false,
-            ],
+        $this->hooksExecutor->expects(self::once())
+            ->method('execute')
+            ->with([
+                Bootstrapper::class => [
+                    Bootstrapper::OPTION_SCHEMA_UPDATE => true,
+                    Bootstrapper::OPTION_SHUTDOWN_KERNEL => true,
+                ],
+                'some.hook.id' => ['enabled' => false],
+            ]);
+
+        $this->bootstrapper->bootstrap(null, [
             'some.hook.id' => ['enabled' => false],
         ]);
+    }
 
-        self::assertSame([
-            Bootstrapper::class => [
-                Bootstrapper::OPTION_SCHEMA_UPDATE => false,
-                Bootstrapper::OPTION_SHUTDOWN_KERNEL => false,
-            ],
-            'some.hook.id' => ['enabled' => false],
-        ], $resolved);
+    public function testShutsDownTheKernelByDefault(): void
+    {
+        $this->kernel->expects(self::once())->method('shutdown');
+
+        $this->bootstrapper->bootstrap();
+    }
+
+    public function testSkipsKernelShutdownWhenOptedOut(): void
+    {
+        $this->kernel->expects(self::never())->method('shutdown');
+
+        $this->bootstrapper->bootstrap(null, [
+            Bootstrapper::class => [Bootstrapper::OPTION_SHUTDOWN_KERNEL => false],
+        ]);
     }
 
     public function testRejectsAnUnrecognizedTopLevelKey(): void
     {
         $this->expectException(UndefinedOptionsException::class);
 
-        $this->resolveOptions($this->hooksExecutorDefiningNothingExtra(), ['some.unknown.key' => []]);
+        $this->bootstrapper->bootstrap(null, ['some.unknown.key' => []]);
     }
 
     public function testRejectsAnUnrecognizedOptionUnderItsOwnKey(): void
     {
         $this->expectException(UndefinedOptionsException::class);
 
-        $this->resolveOptions($this->hooksExecutorDefiningNothingExtra(), [
+        $this->bootstrapper->bootstrap(null, [
             Bootstrapper::class => ['some_unknown_option' => true],
         ]);
-    }
-
-    public function testGetSqliteFilePathStripsExactlyOneLeadingSlash(): void
-    {
-        self::assertSame('path/to/file.db', $this->getSqliteFilePath('sqlite://i@i/path/to/file.db'));
-    }
-
-    public function testGetSqliteFilePathKeepsAnAbsolutePathAbsolute(): void
-    {
-        self::assertSame('/abs/path/to/file.db', $this->getSqliteFilePath('sqlite://i@i//abs/path/to/file.db'));
-    }
-
-    public function testGetSqliteFilePathReturnsNullForMemory(): void
-    {
-        self::assertNull($this->getSqliteFilePath('sqlite://:memory:'));
-    }
-
-    /**
-     * @dataProvider unparseableSqliteDsnProvider
-     */
-    public function testGetSqliteFilePathThrowsForDsnFormsParseUrlCannotParse(string $databaseUrl): void
-    {
-        $this->expectException(LogicException::class);
-
-        $this->getSqliteFilePath($databaseUrl);
-    }
-
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function unparseableSqliteDsnProvider(): iterable
-    {
-        yield 'triple slash' => ['sqlite:///path/to/file.db'];
-        yield 'quadruple slash' => ['sqlite:////abs/path/to/file.db'];
-    }
-
-    public function testRunCommandDoesNothingOnSuccess(): void
-    {
-        $application = $this->createMock(Application::class);
-        $application->method('run')->willReturn(0);
-
-        $this->runCommand($application, ['command' => 'doctrine:database:create']);
-
-        $this->expectNotToPerformAssertions();
-    }
-
-    public function testRunCommandThrowsNamingTheCommandAndExitCodeOnFailure(): void
-    {
-        $application = $this->createMock(Application::class);
-        $application->method('run')->willReturn(2);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Command "doctrine:database:create" failed with exit code 2.');
-
-        $this->runCommand($application, ['command' => 'doctrine:database:create']);
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     *
-     * @return array<string, mixed>
-     */
-    private function resolveOptions(HooksExecutorInterface $hooksExecutor, array $options): array
-    {
-        return $this->callPrivateStatic('resolveOptions', $hooksExecutor, $options);
-    }
-
-    private function getSqliteFilePath(string $databaseUrl): ?string
-    {
-        return $this->callPrivateStatic('getSqliteFilePath', $databaseUrl);
-    }
-
-    /**
-     * @param array<string, mixed> $parameters
-     */
-    private function runCommand(Application $application, array $parameters): void
-    {
-        $this->callPrivateStatic('runCommand', $application, $parameters);
-    }
-
-    /**
-     * @param mixed ...$arguments
-     *
-     * @return mixed
-     */
-    private function callPrivateStatic(string $method, ...$arguments)
-    {
-        $method = new ReflectionMethod(Bootstrapper::class, $method);
-        $method->setAccessible(true);
-
-        return $method->invoke(null, ...$arguments);
-    }
-
-    private function hooksExecutorDefiningNothingExtra(): HooksExecutorInterface
-    {
-        $hooksExecutor = $this->createMock(HooksExecutorInterface::class);
-        $hooksExecutor->method('configureOptions')->willReturnCallback(static function (OptionsResolver $resolver): void {
-        });
-
-        return $hooksExecutor;
     }
 }
