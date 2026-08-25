@@ -6,6 +6,7 @@
         colors="true">
     <php>
         <env name="KERNEL_CLASS" value="Ibexa\Tests\Integration\Test\Core\TestKernel" />
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/>
     </php>
     <testsuites>
         <testsuite name="bundle">
