@@ -33,6 +33,10 @@ interface HookInterface
     /**
      * @param array<string, mixed> $options this hook's own options, already resolved against
      *                                       configureOptions()
+     *
+     * @throws \Exception whatever the concrete hook's own underlying work can throw (e.g. a schema
+     *                     or fixture importer's DBAL exception) — documented here generically rather
+     *                     than per-hook, since the exact type depends on what each hook does
      */
     public function __invoke(array $options): void;
 }

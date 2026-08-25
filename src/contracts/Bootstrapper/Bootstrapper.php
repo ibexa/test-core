@@ -50,6 +50,8 @@ final class Bootstrapper
 
     /**
      * @param array<string, mixed> $options
+     *
+     * @throws \Exception
      */
     public function bootstrap(
         ?string $kernelClass = null,
