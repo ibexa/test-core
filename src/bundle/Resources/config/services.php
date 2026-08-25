@@ -14,6 +14,7 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexAfterFixturesHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaFilesProviderInterface;
 use Ibexa\Test\Core\Bootstrapper\FixtureKernelMethodProvider;
@@ -91,4 +92,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(PurgeSearchIndexHook::class)
         ->arg('$handler', service('ibexa.spi.search'))
         ->tag('ibexa.test.bootstrapper.hook', ['priority' => 100]);
+
+    $services->set(PurgeIndexAfterFixturesHook::class)
+        ->arg('$handler', service('ibexa.spi.search'))
+        ->tag('ibexa.test.bootstrapper.hook', ['priority' => 800]);
 };
