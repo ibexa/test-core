@@ -21,6 +21,15 @@ final class FixtureHook implements HookInterface
 {
     public const OPTION_LOAD_FIXTURES = 'load_fixtures';
 
+    /**
+     * @deprecated a bridge for packages migrating off {@see \Ibexa\Contracts\Core\Test\IbexaKernelTestTrait::postLoadFixtures()}
+     *             or {@see \Ibexa\Contracts\Test\Core\IbexaTestCore::loadFixtures()}'s own callable
+     *             parameter of the same name. Register a separate {@see HookInterface} with a lower
+     *             priority than this one instead — it runs after fixtures are imported the same way,
+     *             without a special case here.
+     */
+    public const OPTION_POST_LOAD_FIXTURES = 'post_load_fixtures';
+
     private FixtureProviderInterface $provider;
 
     private FixtureImporter $fixtureImporter;
@@ -38,6 +47,15 @@ final class FixtureHook implements HookInterface
         $resolver->define(self::OPTION_LOAD_FIXTURES)
             ->default(true)
             ->allowedTypes('bool');
+
+        $resolver->define(self::OPTION_POST_LOAD_FIXTURES)
+            ->default(null)
+            ->allowedTypes('callable', 'null')
+            ->deprecated(
+                'ibexa/test-core',
+                '4.6.0',
+                'The "%name%" option is deprecated, register a separate hook (tagged "ibexa.test.bootstrapper.hook" with a lower priority than FixtureHook\'s) instead.',
+            );
     }
 
     public function __invoke(array $options): void
@@ -48,6 +66,10 @@ final class FixtureHook implements HookInterface
 
         foreach ($this->provider->getFixtures() ?? [] as $fixture) {
             $this->fixtureImporter->import($fixture);
+        }
+
+        if ($options[self::OPTION_POST_LOAD_FIXTURES] !== null) {
+            ($options[self::OPTION_POST_LOAD_FIXTURES])();
         }
     }
 }
