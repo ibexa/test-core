@@ -25,6 +25,15 @@ final class IbexaTestCoreExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
+        // This bundle only makes sense for a test kernel — Bootstrapper always boots one with the
+        // "test" environment (see KernelProvider) — and some of its services (e.g. DatabaseSchemaHook)
+        // depend on classes a consuming package only autoloads via its own autoload-dev, unavailable
+        // once the bundle is present in a real app's dev/prod container (e.g. a downstream project
+        // that registers IbexaTestCoreBundle without scoping it to the "test" environment).
+        if ('test' !== $container->getParameter('kernel.environment')) {
+            return;
+        }
+
         $locator = new FileLocator(__DIR__ . '/../Resources/config');
 
         // Mirrors Kernel::getContainerLoader(), scoped to the file types services.php's own
