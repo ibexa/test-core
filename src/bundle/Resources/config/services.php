@@ -9,6 +9,8 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
@@ -50,6 +52,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         // iterator - tagged_locator() would also index by service id, but its ServiceLocator
         // wrapper re-sorts entries alphabetically by key, destroying the priority order hooks rely on.
         ->arg('$hooks', tagged_iterator('ibexa.test.bootstrapper.hook', 'id'));
+
+    $services->set(DefaultSchemaFilesProvider::class)
+        ->arg('$kernel', service('kernel'));
+
+    $services->set(DefaultFixtureProvider::class);
 
     $services->set(SchemaFilesKernelMethodProvider::class)
         ->arg('$kernel', service('kernel'))

@@ -16,7 +16,8 @@ use Ibexa\Bundle\LegacySearchEngine\IbexaLegacySearchEngineBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture\YamlFixture;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapter;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapterInterface;
 use JMS\TranslationBundle\JMSTranslationBundle;
@@ -118,7 +119,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
      */
     public function getSchemaFiles(): iterable
     {
-        yield $this->locateResource('@IbexaCoreBundle/Resources/config/storage/legacy/schema.yaml');
+        yield from (new DefaultSchemaFilesProvider($this))->getSchemaFiles();
     }
 
     /**
@@ -126,7 +127,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
      */
     public function getFixtures(): iterable
     {
-        yield new YamlFixture(__DIR__ . '/Resources/test_data.yaml');
+        yield from (new DefaultFixtureProvider())->getFixtures();
     }
 
     public function getCacheDir(): string
