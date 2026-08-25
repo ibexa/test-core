@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Ibexa\Bundle\Test\Core\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\DelegatingLoader;
 use Symfony\Component\Config\Loader\LoaderResolver;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -26,14 +27,13 @@ final class IbexaTestCoreExtension extends Extension
     {
         $locator = new FileLocator(__DIR__ . '/../Resources/config');
 
-        // A resolver containing both loaders so services.php's own import() call can resolve a
-        // "services/**.yaml" glob — PhpFileLoader alone has no notion of how to load a .yaml file.
-        $phpLoader = new PhpFileLoader($container, $locator);
-        $phpLoader->setResolver(new LoaderResolver([
-            $phpLoader,
+        // Mirrors Kernel::getContainerLoader(), scoped to the file types services.php's own
+        // "services/**.yaml" drop-in import() call actually needs to resolve.
+        $resolver = new LoaderResolver([
+            new PhpFileLoader($container, $locator),
             new YamlFileLoader($container, $locator),
-        ]));
+        ]);
 
-        $phpLoader->load('services.php');
+        (new DelegatingLoader($resolver))->load('services.php');
     }
 }
