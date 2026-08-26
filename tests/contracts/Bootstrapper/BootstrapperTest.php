@@ -78,7 +78,7 @@ final class BootstrapperTest extends TestCase
             ->method('getKernel')
             ->willReturn($this->kernel);
 
-        $this->databasePreparer = $this->createStub(DatabasePreparerInterface::class);
+        $this->databasePreparer = $this->createMock(DatabasePreparerInterface::class);
 
         $this->bootstrapper = new Bootstrapper($this->kernelProvider, $this->databasePreparer);
     }
@@ -181,6 +181,8 @@ final class BootstrapperTest extends TestCase
     /**
      * @testWith [{"some.unknown.key": {}}]
      *           [{"Ibexa\\Contracts\\Test\\Core\\Bootstrapper\\Bootstrapper": {"some_unknown_option": true}}]
+     *
+     * @param array<string, mixed> $options
      */
     public function testRejectsAnUnrecognizedOptions(array $options): void
     {
