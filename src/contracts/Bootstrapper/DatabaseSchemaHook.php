@@ -19,6 +19,12 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class DatabaseSchemaHook implements HookInterface
 {
+    /**
+     * Fixed tag priority this hook is registered at — runs first, before any fixture/migration
+     * import needs the schema to exist.
+     */
+    public const PRIORITY = 1000;
+
     public const OPTION_LOAD_SCHEMA = 'load_schema';
 
     private SchemaFilesProviderInterface $provider;

@@ -16,11 +16,18 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *
  * Disabled by default; pass `[self::OPTION_PURGE_INDEX => true]` as this hook's own options (keyed
  * by its own service id in the bootstrap options array) to enable it. Registered at a fixed priority
- * between FixtureHook's (900) and MigrationHook's (500), unlike {@see PurgeSearchIndexHook}'s own
- * fixed priority (100), which runs after migrations.
+ * between {@see FixtureHook}'s (900) and ibexa/migrations' MigrationHook's (500), unlike
+ * {@see PurgeSearchIndexHook}'s own fixed priority, which runs after everything else, including
+ * migrations.
  */
 final class PurgeIndexAfterFixturesHook implements HookInterface
 {
+    /**
+     * Fixed tag priority this hook is registered at — between {@see FixtureHook} (900) and ibexa/
+     * migrations' MigrationHook (500), if present.
+     */
+    public const PRIORITY = 800;
+
     public const OPTION_PURGE_INDEX = 'purge_index';
 
     private VersatileHandler $handler;

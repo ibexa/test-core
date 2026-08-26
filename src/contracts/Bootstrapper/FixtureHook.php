@@ -19,6 +19,12 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class FixtureHook implements HookInterface
 {
+    /**
+     * Fixed tag priority this hook is registered at — runs after {@see DatabaseSchemaHook} (1000),
+     * before ibexa/migrations' MigrationHook (500), if present.
+     */
+    public const PRIORITY = 900;
+
     public const OPTION_LOAD_FIXTURES = 'load_fixtures';
 
     /**

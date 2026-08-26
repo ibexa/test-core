@@ -13,6 +13,7 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexAfterFixturesHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook;
@@ -48,7 +49,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         // falls back to its own service id as the key) while staying a plain priority-sorted
         // iterator - tagged_locator() would also index by service id, but its ServiceLocator
         // wrapper re-sorts entries alphabetically by key, destroying the priority order hooks rely on.
-        ->arg('$hooks', tagged_iterator('ibexa.test.bootstrapper.hook', 'id'));
+        ->arg('$hooks', tagged_iterator(HookInterface::TAG, 'id'));
 
     $services->set(DefaultSchemaFilesProvider::class)
         ->arg('$kernel', service('kernel'));
@@ -79,17 +80,17 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(DatabaseSchemaHook::class)
         ->arg('$provider', service(SchemaFilesProviderChain::class))
-        ->tag('ibexa.test.bootstrapper.hook', ['priority' => 1000]);
+        ->tag(HookInterface::TAG, ['priority' => DatabaseSchemaHook::PRIORITY]);
 
     $services->set(FixtureHook::class)
         ->arg('$provider', service(FixtureProviderChain::class))
-        ->tag('ibexa.test.bootstrapper.hook', ['priority' => 900]);
+        ->tag(HookInterface::TAG, ['priority' => FixtureHook::PRIORITY]);
 
     $services->set(PurgeSearchIndexHook::class)
         ->arg('$handler', service('ibexa.spi.search'))
-        ->tag('ibexa.test.bootstrapper.hook', ['priority' => 100]);
+        ->tag(HookInterface::TAG, ['priority' => PurgeSearchIndexHook::PRIORITY]);
 
     $services->set(PurgeIndexAfterFixturesHook::class)
         ->arg('$handler', service('ibexa.spi.search'))
-        ->tag('ibexa.test.bootstrapper.hook', ['priority' => 800]);
+        ->tag(HookInterface::TAG, ['priority' => PurgeIndexAfterFixturesHook::PRIORITY]);
 };
