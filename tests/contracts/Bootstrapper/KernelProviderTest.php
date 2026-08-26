@@ -51,18 +51,16 @@ final class KernelProviderTest extends TestCase
         }
     }
 
-    public function testThrowsWhenKernelClassIsNullAndNoEnvOrServerFallbackIsSet(): void
+    /**
+     * @testWith [null, "The kernel class \"null\" must be a subclass of \"Ibexa\\Contracts\\Test\\Core\\IbexaTestKernel\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
+     *           ["stdClass", "The kernel class \"stdClass\" must be a subclass of \"Ibexa\\Contracts\\Test\\Core\\IbexaTestKernel\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
+     */
+    public function testThrowsWhenKernelClassIsInvalid(?string $kernelClass, string $exceptionMessage): void
     {
         $this->expectException(LogicException::class);
+        $this->expectExceptionMessage($exceptionMessage);
 
-        (new KernelProvider())->getKernel(null);
-    }
-
-    public function testThrowsWhenKernelClassIsNotASubclassOfIbexaTestKernel(): void
-    {
-        $this->expectException(LogicException::class);
-
-        (new KernelProvider())->getKernel(stdClass::class);
+        (new KernelProvider())->getKernel($kernelClass);
     }
 
     public function testFallsBackToEnvKernelClassWhenArgumentIsNull(): void
