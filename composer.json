@@ -38,6 +38,7 @@
     "autoload-dev": {
         "psr-4": {
             "Ibexa\\Tests\\Bundle\\Test\\Core\\": "tests/bundle/",
+            "Ibexa\\Tests\\Contracts\\Test\\Core\\": "tests/contracts/",
             "Ibexa\\Tests\\Integration\\Test\\Core\\": "tests/integration/",
             "Ibexa\\Tests\\Test\\Core\\": "tests/lib/"
         }
