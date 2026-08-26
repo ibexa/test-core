@@ -26,22 +26,22 @@ final class BootstrapperTest extends TestCase
     /**
      * @var \Ibexa\Contracts\Test\Core\IbexaTestKernel&\PHPUnit\Framework\MockObject\MockObject
      */
-    private $kernel;
+    private IbexaTestKernel $kernel;
 
     /**
      * @var \Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface&\PHPUnit\Framework\MockObject\MockObject
      */
-    private $hooksExecutor;
+    private HooksExecutorInterface $hooksExecutor;
 
     /**
      * @var \Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface&\PHPUnit\Framework\MockObject\MockObject
      */
-    private $kernelProvider;
+    private KernelProviderInterface $kernelProvider;
 
     /**
      * @var \Ibexa\Contracts\Test\Core\Bootstrapper\DatabasePreparerInterface&\PHPUnit\Framework\MockObject\MockObject
      */
-    private $databasePreparer;
+    private DatabasePreparerInterface $databasePreparer;
 
     private Bootstrapper $bootstrapper;
 
