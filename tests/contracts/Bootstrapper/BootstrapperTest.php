@@ -49,27 +49,44 @@ final class BootstrapperTest extends TestCase
     {
         $testContainer = $this->createMock(ContainerInterface::class);
         $this->hooksExecutor = $this->createMock(HooksExecutorInterface::class);
-        $this->hooksExecutor->method('configureOptions')->willReturnCallback(static function (OptionsResolver $resolver): void {
-        });
-        $testContainer->method('get')->with(HooksExecutorInterface::class)->willReturn($this->hooksExecutor);
+        $this->hooksExecutor
+            ->expects(self::once())
+            ->method('configureOptions')
+            ->willReturnCallback(static function (OptionsResolver $resolver): void {});
+
+        $testContainer
+            ->expects(self::once())
+            ->method('get')
+            ->with(HooksExecutorInterface::class)
+            ->willReturn($this->hooksExecutor);
 
         $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->with('test.service_container')->willReturn($testContainer);
+        $container
+            ->expects(self::once())
+            ->method('get')
+            ->with('test.service_container')->willReturn($testContainer);
 
         $this->kernel = $this->createMock(IbexaTestKernel::class);
-        $this->kernel->method('getContainer')->willReturn($container);
+        $this->kernel
+            ->expects(self::once())
+            ->method('getContainer')
+            ->willReturn($container);
 
         $this->kernelProvider = $this->createMock(KernelProviderInterface::class);
-        $this->kernelProvider->method('getKernel')->willReturn($this->kernel);
+        $this->kernelProvider
+            ->expects(self::once())
+            ->method('getKernel')
+            ->willReturn($this->kernel);
 
-        $this->databasePreparer = $this->createMock(DatabasePreparerInterface::class);
+        $this->databasePreparer = $this->createStub(DatabasePreparerInterface::class);
 
         $this->bootstrapper = new Bootstrapper($this->kernelProvider, $this->databasePreparer);
     }
 
     public function testDelegatesKernelResolutionToTheProviderWithTheGivenKernelClass(): void
     {
-        $this->kernelProvider->expects(self::once())
+        $this->kernelProvider
+            ->expects(self::once())
             ->method('getKernel')
             ->with('My\\Kernel')
             ->willReturn($this->kernel);
@@ -84,7 +101,8 @@ final class BootstrapperTest extends TestCase
 
     public function testPreparesTheDatabaseWithTheDefaultSchemaUpdateOption(): void
     {
-        $this->databasePreparer->expects(self::once())
+        $this->databasePreparer
+            ->expects(self::once())
             ->method('prepareDatabase')
             ->with($this->kernel, true);
 
@@ -93,7 +111,8 @@ final class BootstrapperTest extends TestCase
 
     public function testPreparesTheDatabaseWithSchemaUpdateDisabledWhenOptedOut(): void
     {
-        $this->databasePreparer->expects(self::once())
+        $this->databasePreparer
+            ->expects(self::once())
             ->method('prepareDatabase')
             ->with($this->kernel, false);
 
@@ -104,7 +123,9 @@ final class BootstrapperTest extends TestCase
 
     public function testSkipsDatabasePreparationEntirelyWhenOptedOut(): void
     {
-        $this->databasePreparer->expects(self::never())->method('prepareDatabase');
+        $this->databasePreparer
+            ->expects(self::never())
+            ->method('prepareDatabase');
 
         $this->bootstrapper->bootstrap(null, [
             Bootstrapper::class => [Bootstrapper::OPTION_PREPARE_DATABASE => false],
@@ -113,11 +134,15 @@ final class BootstrapperTest extends TestCase
 
     public function testExecutesHooksWithTheFullyResolvedOptionsArray(): void
     {
-        $this->hooksExecutor->method('configureOptions')->willReturnCallback(static function (OptionsResolver $resolver): void {
-            $resolver->define('some.hook.id')->default([])->allowedTypes('array');
-        });
+        $this->hooksExecutor
+            ->expects(self::once())
+            ->method('configureOptions')
+            ->willReturnCallback(static function (OptionsResolver $resolver): void {
+                $resolver->define('some.hook.id')->default([])->allowedTypes('array');
+            });
 
-        $this->hooksExecutor->expects(self::once())
+        $this->hooksExecutor
+            ->expects(self::once())
             ->method('execute')
             ->with([
                 Bootstrapper::class => [
@@ -135,33 +160,32 @@ final class BootstrapperTest extends TestCase
 
     public function testShutsDownTheKernelByDefault(): void
     {
-        $this->kernel->expects(self::once())->method('shutdown');
+        $this->kernel
+            ->expects(self::once())
+            ->method('shutdown');
 
         $this->bootstrapper->bootstrap();
     }
 
     public function testSkipsKernelShutdownWhenOptedOut(): void
     {
-        $this->kernel->expects(self::never())->method('shutdown');
+        $this->kernel
+            ->expects(self::never())
+            ->method('shutdown');
 
         $this->bootstrapper->bootstrap(null, [
             Bootstrapper::class => [Bootstrapper::OPTION_SHUTDOWN_KERNEL => false],
         ]);
     }
 
-    public function testRejectsAnUnrecognizedTopLevelKey(): void
+    /**
+     * @testWith [{"some.unknown.key": {}}]
+     *           [{"Ibexa\\Contracts\\Test\\Core\\Bootstrapper\\Bootstrapper": {"some_unknown_option": true}}]
+     */
+    public function testRejectsAnUnrecognizedOptions(array $options): void
     {
         $this->expectException(UndefinedOptionsException::class);
 
-        $this->bootstrapper->bootstrap(null, ['some.unknown.key' => []]);
-    }
-
-    public function testRejectsAnUnrecognizedOptionUnderItsOwnKey(): void
-    {
-        $this->expectException(UndefinedOptionsException::class);
-
-        $this->bootstrapper->bootstrap(null, [
-            Bootstrapper::class => ['some_unknown_option' => true],
-        ]);
+        $this->bootstrapper->bootstrap(null, $options);
     }
 }
