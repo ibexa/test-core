@@ -26,10 +26,6 @@ use Ibexa\Test\Core\Bootstrapper\SchemaFilesParameterProvider;
 use Ibexa\Test\Core\Bootstrapper\SchemaFilesProviderChain;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
-    // Drop-in extension point: a YAML or PHP file placed under services/ is loaded automatically.
-    $containerConfigurator->import('services/**.yaml');
-    $containerConfigurator->import('services/**.php');
-
     $containerConfigurator->parameters()
         // null (not []): an unset/unconfigured parameter must be distinguishable from a consumer
         // deliberately configuring an empty list, since only the latter should stop the fallback
