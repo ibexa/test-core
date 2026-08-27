@@ -9,11 +9,12 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -21,68 +22,39 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class FixtureHookTest extends TestCase
 {
-    use ExpectDeprecationTrait;
-
-    public function testPostLoadFixturesOptionDefaultsToNull(): void
+    public function testLoadFixturesOptionDefaultsToTrue(): void
     {
-        $hook = $this->hookReturningFixtures([]);
+        $options = $this->resolve($this->hookReturningFixtures([]), []);
 
-        $options = $this->resolve($hook, []);
-
-        self::assertNull($options[FixtureHook::OPTION_POST_LOAD_FIXTURES]);
-
-        // Resolving to null must not make __invoke() try to call it as a callback.
-        $hook($options);
+        self::assertTrue($options[FixtureHook::OPTION_LOAD_FIXTURES]);
     }
 
-    /**
-     * @group legacy
-     */
-    public function testRunsPostLoadFixturesCallbackAfterImporting(): void
+    public function testAsksProviderForFixturesWhenEnabled(): void
     {
-        $called = false;
-        $hook = $this->hookReturningFixtures([]);
+        $fixture = $this->createMock(Fixture::class);
+        $fixture->method('load')->willReturn([]);
 
-        $options = $this->resolve($hook, [
-            FixtureHook::OPTION_POST_LOAD_FIXTURES => static function () use (&$called): void {
-                $called = true;
-            },
-        ]);
-        $hook($options);
+        $provider = $this->createMock(FixtureProviderInterface::class);
+        $provider->expects(self::once())
+            ->method('getFixtures')
+            ->willReturn([$fixture]);
 
-        self::assertTrue($called);
+        $connection = $this->createMock(Connection::class);
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->method('supportsSequences')->willReturn(false);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+
+        $hook = new FixtureHook($provider, new FixtureImporter($connection));
+        $hook($this->resolve($hook, []));
     }
 
-    /**
-     * @group legacy
-     */
-    public function testDoesNotRunPostLoadFixturesCallbackWhenFixtureLoadingIsDisabled(): void
+    public function testDoesNotAskProviderForFixturesWhenDisabled(): void
     {
-        $called = false;
-        $hook = $this->hookReturningFixtures([]);
+        $provider = $this->createMock(FixtureProviderInterface::class);
+        $provider->expects(self::never())->method('getFixtures');
 
-        $options = $this->resolve($hook, [
-            FixtureHook::OPTION_LOAD_FIXTURES => false,
-            FixtureHook::OPTION_POST_LOAD_FIXTURES => static function () use (&$called): void {
-                $called = true;
-            },
-        ]);
-        $hook($options);
-
-        self::assertFalse($called);
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testPostLoadFixturesOptionIsDeprecated(): void
-    {
-        $this->expectDeprecation('Since ibexa/test-core 4.6.0: The "post_load_fixtures" option is deprecated, register a separate hook (tagged "ibexa.test.bootstrapper.hook" with a lower priority than FixtureHook\'s) instead.');
-
-        $this->resolve($this->hookReturningFixtures([]), [
-            FixtureHook::OPTION_POST_LOAD_FIXTURES => static function (): void {
-            },
-        ]);
+        $hook = new FixtureHook($provider, new FixtureImporter($this->createMock(Connection::class)));
+        $hook($this->resolve($hook, [FixtureHook::OPTION_LOAD_FIXTURES => false]));
     }
 
     /**
