@@ -16,7 +16,8 @@ use Ibexa\Bundle\LegacySearchEngine\IbexaLegacySearchEngineBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture\YamlFixture;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapter;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapterInterface;
 use JMS\TranslationBundle\JMSTranslationBundle;
@@ -54,6 +55,11 @@ use Symfony\Component\HttpKernel\Kernel;
  * ## Adding bundles
  *
  * Bundles can be added by extending IbexaTestKernel::registerBundles() method (just like in any Kernel).
+ *
+ * This kernel does not register {@see \Ibexa\Bundle\Test\Core\IbexaTestCoreBundle} itself, so a kernel
+ * that wants to use {@see \Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper} (and therefore needs
+ * {@see \Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface} and the built-in hooks it
+ * registers) must `yield new IbexaTestCoreBundle();` from its own registerBundles() override.
  *
  * ## Exposing your services
  *
@@ -113,7 +119,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
      */
     public function getSchemaFiles(): iterable
     {
-        yield $this->locateResource('@IbexaCoreBundle/Resources/config/storage/legacy/schema.yaml');
+        yield from (new DefaultSchemaFilesProvider($this))->getSchemaFiles();
     }
 
     /**
@@ -121,7 +127,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
      */
     public function getFixtures(): iterable
     {
-        yield new YamlFixture(__DIR__ . '/Resources/test_data.yaml');
+        yield from (new DefaultFixtureProvider())->getFixtures();
     }
 
     public function getCacheDir(): string
