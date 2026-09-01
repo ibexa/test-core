@@ -10,6 +10,7 @@
         "doctrine/dbal": "^3.7.0",
         "symfony/framework-bundle": "^7.4",
         "symfony/mime": "^7.4",
+        "symfony/options-resolver": "^7.4",
         "symfony/translation": "^7.4",
         "symfony/validator": "^7.4",
         "symfony/yaml": "^7.4"
@@ -22,7 +23,8 @@
         "ibexa/rector": "~5.0.x-dev",
         "knplabs/knp-menu": "^3.3",
         "phpstan/phpstan": "^2.0",
-        "phpstan/phpstan-phpunit": "^2.0"
+        "phpstan/phpstan-phpunit": "^2.0",
+        "symfony/phpunit-bridge": "^5.4"
     },
     "autoload": {
         "psr-4": {
@@ -34,6 +36,7 @@
     "autoload-dev": {
         "psr-4": {
             "Ibexa\\Tests\\Bundle\\Test\\Core\\": "tests/bundle/",
+            "Ibexa\\Tests\\Contracts\\Test\\Core\\": "tests/contracts/",
             "Ibexa\\Tests\\Integration\\Test\\Core\\": "tests/integration/",
             "Ibexa\\Tests\\Test\\Core\\": "tests/lib/"
         }
