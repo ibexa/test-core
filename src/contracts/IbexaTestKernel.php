@@ -13,11 +13,14 @@ use Doctrine\DBAL\Connection;
 use FOS\JsRoutingBundle\FOSJsRoutingBundle;
 use Ibexa\Bundle\Core\IbexaCoreBundle;
 use Ibexa\Bundle\LegacySearchEngine\IbexaLegacySearchEngineBundle;
+use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture\YamlFixture;
+use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapter;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapterInterface;
 use JMS\TranslationBundle\JMSTranslationBundle;
@@ -55,6 +58,11 @@ use Symfony\Component\HttpKernel\Kernel;
  * ## Adding bundles
  *
  * Bundles can be added by extending IbexaTestKernel::registerBundles() method (just like in any Kernel).
+ *
+ * This kernel does not register {@see IbexaTestCoreBundle} itself, so a kernel
+ * that wants to use {@see Bootstrapper} (and therefore needs
+ * {@see HooksExecutorInterface} and the built-in hooks it
+ * registers) must `yield new IbexaTestCoreBundle();` from its own registerBundles() override.
  *
  * ## Exposing your services
  *
@@ -114,15 +122,12 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
      */
     public function getSchemaFiles(): iterable
     {
-        yield $this->locateResource('@IbexaCoreBundle/Resources/config/storage/legacy/schema.yaml');
+        yield from (new DefaultSchemaFilesProvider($this))->getSchemaFiles();
     }
 
-    /**
-     * @return iterable<Fixture>
-     */
     public function getFixtures(): iterable
     {
-        yield new YamlFixture(__DIR__ . '/Resources/test_data.yaml');
+        yield from (new DefaultFixtureProvider())->getFixtures();
     }
 
     public function getCacheDir(): string
