@@ -48,16 +48,22 @@ final class DatabasePreparer implements DatabasePreparerInterface
         // dropping a database that was never created (e.g. this bootstrap's very first run).
         // $_ENV takes precedence to match doctrine.php's own source of truth for this value.
         $databaseUrl = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
-        if (!is_string($databaseUrl) || !str_starts_with($databaseUrl, 'sqlite')) {
+        $isSqlite = is_string($databaseUrl) && str_starts_with($databaseUrl, 'sqlite');
+        if (!$isSqlite) {
             $dropDatabaseArgs['--if-exists'] = '1';
         }
 
         $this->consoleCommandRunner->run($application, $dropDatabaseArgs);
 
-        $this->consoleCommandRunner->run($application, [
-            'command' => 'doctrine:database:create',
-            '--quiet' => true,
-        ]);
+        // SQLite has no CREATE DATABASE. DBAL 4's SQLitePlatform::getCreateDatabaseSQL() throws
+        // NotSupported where DBAL 3 left it to AbstractPlatform, so the command now fails outright.
+        // Nothing is lost by skipping it: the file is created when the connection opens.
+        if (!$isSqlite) {
+            $this->consoleCommandRunner->run($application, [
+                'command' => 'doctrine:database:create',
+                '--quiet' => true,
+            ]);
+        }
 
         if ($runSchemaUpdate) {
             $this->consoleCommandRunner->run($application, [
