@@ -13,7 +13,12 @@ use Ibexa\DoctrineSchema\Database\DbPlatform\SqliteDbPlatform;
 use RuntimeException;
 
 return static function (ContainerConfigurator $container): void {
-    $_ENV['DATABASE_URL'] ??= 'sqlite://:memory:';
+    // In-memory SQLite ("sqlite://:memory:") is deliberately unsupported as a default: it can't
+    // participate in the per-test DAMA transaction/rollback most consumers rely on, and
+    // doctrine:database:drop can't act on it at all (its connection params carry neither a "path"
+    // nor a "dbname"). A real file, cleaned up via doctrine:database:drop on every bootstrap, is the
+    // supported default — matches the DATABASE_URL every consuming package already sets explicitly.
+    $_ENV['DATABASE_URL'] ??= 'sqlite://i@i/var/test.db';
     $container->parameters()->set('env(DATABASE_URL)', $_ENV['DATABASE_URL']);
 
     $platformsMap = [
