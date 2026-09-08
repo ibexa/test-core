@@ -9,9 +9,9 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
-use function Ibexa\PolyfillPhp82\iterator_to_array;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Traversable;
 
 /**
  * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider
@@ -28,6 +28,8 @@ final class DefaultSchemaFilesProviderTest extends TestCase
 
         $provider = new DefaultSchemaFilesProvider($kernel);
 
-        self::assertSame(['/resolved/path/schema.yaml'], iterator_to_array($provider->getSchemaFiles()));
+        $schemaFiles = $provider->getSchemaFiles();
+        self::assertInstanceOf(Traversable::class, $schemaFiles);
+        self::assertSame(['/resolved/path/schema.yaml'], iterator_to_array($schemaFiles));
     }
 }
