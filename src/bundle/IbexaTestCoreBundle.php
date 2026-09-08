@@ -18,5 +18,15 @@ final class IbexaTestCoreBundle extends Bundle
     public function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new PersistenceCheckCompilerPass(), PassConfig::TYPE_AFTER_REMOVING);
+
+        // DatabaseSchemaHook autowires SchemaBuilderInterface, provided by DoctrineSchemaBundle —
+        // only registered here (not IbexaTestCoreExtension::load()) since all bundles' extensions
+        // are registered on the real container before any bundle's build() runs, but each
+        // extension's own load() runs against a temporary, per-extension container copy where
+        // sibling extensions never show up in hasExtension().
+        $container->setParameter(
+            'ibexa_test_core.has_doctrine_schema_bundle',
+            $container->hasExtension('ibexa_doctrine_schema')
+        );
     }
 }

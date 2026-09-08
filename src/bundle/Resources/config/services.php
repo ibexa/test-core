@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
@@ -77,10 +76,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(FixtureProviderChain::class)
         ->arg('$providers', tagged_iterator(FixtureProviderInterface::TAG));
-
-    $services->set(DatabaseSchemaHook::class)
-        ->arg('$provider', service(SchemaFilesProviderChain::class))
-        ->tag(HookInterface::TAG, ['priority' => DatabaseSchemaHook::PRIORITY]);
 
     $services->set(FixtureHook::class)
         ->arg('$provider', service(FixtureProviderChain::class))

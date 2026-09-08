@@ -36,5 +36,15 @@ final class IbexaTestCoreExtension extends Extension
             new FileLocator(__DIR__ . '/../Resources/config')
         );
         $loader->load('services.php');
+
+        // DatabaseSchemaHook autowires SchemaBuilderInterface, provided by DoctrineSchemaBundle —
+        // see IbexaTestCoreBundle::build(), where its presence is actually detected (that runs
+        // against the real, shared container; this method's own $container is a temporary,
+        // per-extension copy MergeExtensionConfigurationPass uses to avoid cross-extension
+        // leakage, so sibling bundles' extensions never show up in hasExtension() from here).
+        if ($container->hasParameter('ibexa_test_core.has_doctrine_schema_bundle')
+            && $container->getParameter('ibexa_test_core.has_doctrine_schema_bundle')) {
+            $loader->load('services/database_schema_hook.php');
+        }
     }
 }
