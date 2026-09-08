@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
@@ -16,21 +17,16 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexAfterFixturesHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook;
-use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaFilesProviderInterface;
 use Ibexa\Test\Core\Bootstrapper\FixtureKernelMethodProvider;
 use Ibexa\Test\Core\Bootstrapper\FixtureParameterProvider;
 use Ibexa\Test\Core\Bootstrapper\FixtureProviderChain;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
-use Ibexa\Test\Core\Bootstrapper\SchemaFilesKernelMethodProvider;
-use Ibexa\Test\Core\Bootstrapper\SchemaFilesParameterProvider;
-use Ibexa\Test\Core\Bootstrapper\SchemaFilesProviderChain;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
         // null (not []): an unset/unconfigured parameter must be distinguishable from a consumer
         // deliberately configuring an empty list, since only the latter should stop the fallback
-        // chain in *ProviderChain — see SchemaFilesProviderInterface's docblock.
-        ->set('ibexa.test.schema_files', null)
+        // chain in FixtureProviderChain — see FixtureProviderInterface's docblock.
         ->set('ibexa.test.fixture_files', null);
 
     $services = $containerConfigurator->services();
@@ -55,17 +51,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(DefaultFixtureProvider::class);
 
-    $services->set(SchemaFilesKernelMethodProvider::class)
-        ->arg('$kernel', service('kernel'))
-        ->tag(SchemaFilesProviderInterface::TAG, ['priority' => 0]);
-
-    $services->set(SchemaFilesParameterProvider::class)
-        ->arg('$schemaFiles', '%ibexa.test.schema_files%')
-        ->tag(SchemaFilesProviderInterface::TAG, ['priority' => 100]);
-
-    $services->set(SchemaFilesProviderChain::class)
-        ->arg('$providers', tagged_iterator(SchemaFilesProviderInterface::TAG));
-
     $services->set(FixtureKernelMethodProvider::class)
         ->arg('$kernel', service('kernel'))
         ->tag(FixtureProviderInterface::TAG, ['priority' => 0]);
@@ -76,6 +61,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(FixtureProviderChain::class)
         ->arg('$providers', tagged_iterator(FixtureProviderInterface::TAG));
+
+    $services->set(DatabaseSchemaHook::class)
+        ->tag(HookInterface::TAG, ['priority' => DatabaseSchemaHook::PRIORITY]);
 
     $services->set(FixtureHook::class)
         ->arg('$provider', service(FixtureProviderChain::class))

@@ -13,16 +13,13 @@ use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Installs the database schema by dispatching the same event-driven SchemaBuilderEvent
- * `ibexa:install` itself uses for its legacy path — every registered package's own subscriber
- * (e.g. a package's own BuildSchemaSubscriber) contributes its own tables via
- * {@see SchemaBuilderInterface::buildSchema()} — then applies the resulting schema directly, since
- * the test database is always freshly created (no existing schema to diff against). No
- * per-package schema file list is needed, so {@see SchemaFilesProviderInterface} is unused by
- * this hook.
+ * Installs the database schema built by {@see SchemaBuilderInterface::buildSchema()}, i.e. from
+ * every registered bundle's own SchemaBuilderEvent subscriber. Requires `DoctrineSchemaBundle` and
+ * `IbexaRepositoryInstallerBundle`; removed from the container when either is missing, by
+ * {@see \Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass\RemoveUnsatisfiableHooksPass}.
  *
- * Enabled by default; pass `[self::OPTION_LOAD_SCHEMA => false]` as this hook's own options (keyed
- * by its own service id in the bootstrap options array) to skip it.
+ * Enabled by default; pass `[self::OPTION_LOAD_SCHEMA => false]` as this hook's own options to
+ * skip it.
  */
 final class DatabaseSchemaHook implements HookInterface
 {
