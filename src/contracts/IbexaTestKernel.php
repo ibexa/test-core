@@ -127,6 +127,13 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
 
     /**
      * @return iterable<string>
+     *
+     * @deprecated since Ibexa 4.6.x. The test schema is built from
+     *             {@see \Ibexa\Contracts\DoctrineSchema\Event\SchemaBuilderEvent} — whichever bundles
+     *             a kernel registers is what the schema contains — so a kernel no longer declares
+     *             schema files, and overriding this serves no purpose. Retained because
+     *             {@see \Ibexa\Contracts\Core\Test\IbexaTestKernelInterface} still mandates it.
+     *             Will be removed in 6.0.
      */
     public function getSchemaFiles(): iterable
     {
