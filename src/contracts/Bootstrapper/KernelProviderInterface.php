@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Ibexa\Contracts\Test\Core\IbexaTestKernel;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * @experimental
@@ -20,8 +20,8 @@ use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 interface KernelProviderInterface
 {
     /**
-     * @throws \LogicException if $kernelClass (or its env/server fallback) isn't a valid
-     *                          IbexaTestKernel subclass
+     * @throws \LogicException if $kernelClass (or its env/server fallback) doesn't name a
+     *                          bootable {@see KernelInterface} implementation
      */
-    public function getKernel(?string $kernelClass): IbexaTestKernel;
+    public function getKernel(?string $kernelClass): KernelInterface;
 }

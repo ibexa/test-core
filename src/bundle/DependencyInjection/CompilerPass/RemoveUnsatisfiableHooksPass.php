@@ -9,8 +9,12 @@ declare(strict_types=1);
 namespace Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass;
 
 use Ibexa\Bundle\RepositoryInstaller\Event\Subscriber\BuildSchemaSubscriber;
+use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexAfterFixturesHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -30,6 +34,9 @@ final class RemoveUnsatisfiableHooksPass implements CompilerPassInterface
             // tables but none of core's
             BuildSchemaSubscriber::class,
         ],
+        FixtureHook::class => [FixtureImporter::class],
+        PurgeSearchIndexHook::class => ['ibexa.spi.search'],
+        PurgeIndexAfterFixturesHook::class => ['ibexa.spi.search'],
     ];
 
     public function process(ContainerBuilder $container): void

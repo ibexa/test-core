@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Ibexa\Contracts\Test\Core\IbexaTestKernel;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * @experimental
@@ -22,5 +22,5 @@ interface DatabasePreparerInterface
     /**
      * @throws \Exception command failures propagate as-is
      */
-    public function prepareDatabase(IbexaTestKernel $kernel, bool $runSchemaUpdate): void;
+    public function prepareDatabase(KernelInterface $kernel, bool $runSchemaUpdate): void;
 }
