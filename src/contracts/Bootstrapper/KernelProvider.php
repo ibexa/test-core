@@ -8,22 +8,22 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * @internal
  */
 final class KernelProvider implements KernelProviderInterface
 {
-    public function getKernel(?string $kernelClass): IbexaTestKernel
+    public function getKernel(?string $kernelClass): KernelInterface
     {
         $kernelClass ??= $_ENV['KERNEL_CLASS'] ?? $_SERVER['KERNEL_CLASS'] ?? null;
-        if ($kernelClass === null || !is_a($kernelClass, IbexaTestKernel::class, true)) {
+        if ($kernelClass === null || !is_a($kernelClass, KernelInterface::class, true)) {
             throw new LogicException(sprintf(
-                'The kernel class "%s" must be a subclass of "%s". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class.',
+                'The kernel class "%s" must implement "%s". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class.',
                 $kernelClass ?? 'null',
-                IbexaTestKernel::class,
+                KernelInterface::class,
             ));
         }
 

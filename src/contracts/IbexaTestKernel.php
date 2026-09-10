@@ -12,11 +12,14 @@ use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\DBAL\Connection;
 use FOS\JsRoutingBundle\FOSJsRoutingBundle;
 use Ibexa\Bundle\Core\IbexaCoreBundle;
+use Ibexa\Bundle\DoctrineSchema\DoctrineSchemaBundle;
 use Ibexa\Bundle\LegacySearchEngine\IbexaLegacySearchEngineBundle;
+use Ibexa\Bundle\RepositoryInstaller\IbexaRepositoryInstallerBundle;
 use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
+use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
@@ -63,6 +66,15 @@ use Symfony\Component\HttpKernel\Kernel;
  * that wants to use {@see Bootstrapper} (and therefore needs
  * {@see HooksExecutorInterface} and the built-in hooks it
  * registers) must `yield new IbexaTestCoreBundle();` from its own registerBundles() override.
+ *
+ * It does register {@see DoctrineSchemaBundle} and
+ * {@see IbexaRepositoryInstallerBundle}, which together make
+ * SchemaBuilderEvent usable: the former provides
+ * {@see SchemaBuilderInterface}, the latter carries core's
+ * own BuildSchemaSubscriber (it lives there rather than in IbexaCoreBundle), without which the
+ * event yields every other package's tables but none of core's. They are a pair —
+ * IbexaRepositoryInstallerBundle::build() throws if DoctrineSchemaBundle is absent. A subclass must
+ * therefore NOT yield either of them again; Symfony rejects two bundles with the same name.
  *
  * ## Exposing your services
  *
@@ -144,6 +156,8 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     {
         yield new SecurityBundle();
         yield new IbexaCoreBundle();
+        yield new DoctrineSchemaBundle();
+        yield new IbexaRepositoryInstallerBundle();
         yield new IbexaLegacySearchEngineBundle();
         yield new JMSTranslationBundle();
         yield new FOSJsRoutingBundle();
