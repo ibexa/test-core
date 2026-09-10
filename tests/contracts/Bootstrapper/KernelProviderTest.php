@@ -13,6 +13,8 @@ use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\HttpKernel\Kernel;
 
 /**
  * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\KernelProvider
@@ -52,8 +54,8 @@ final class KernelProviderTest extends TestCase
     }
 
     /**
-     * @testWith [null, "The kernel class \"null\" must be a subclass of \"Ibexa\\Contracts\\Test\\Core\\IbexaTestKernel\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
-     *           ["stdClass", "The kernel class \"stdClass\" must be a subclass of \"Ibexa\\Contracts\\Test\\Core\\IbexaTestKernel\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
+     * @testWith [null, "The kernel class \"null\" must implement \"Symfony\\Component\\HttpKernel\\KernelInterface\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
+     *           ["stdClass", "The kernel class \"stdClass\" must implement \"Symfony\\Component\\HttpKernel\\KernelInterface\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
      */
     public function testThrowsWhenKernelClassIsInvalid(?string $kernelClass, string $exceptionMessage): void
     {
@@ -91,12 +93,44 @@ final class KernelProviderTest extends TestCase
         self::assertInstanceOf(NoopBootTestKernel::class, $kernel);
     }
 
+    public function testAcceptsAnyKernelInterfaceImplementation(): void
+    {
+        $kernel = (new KernelProvider())->getKernel(NoopBootPlainKernel::class);
+
+        self::assertInstanceOf(NoopBootPlainKernel::class, $kernel);
+        self::assertTrue($kernel->didBoot);
+    }
+
     public function testBootsTheReturnedKernel(): void
     {
         $kernel = (new KernelProvider())->getKernel(NoopBootTestKernel::class);
 
         self::assertInstanceOf(NoopBootTestKernel::class, $kernel);
         self::assertTrue($kernel->didBoot);
+    }
+}
+
+final class NoopBootPlainKernel extends Kernel
+{
+    public bool $didBoot = false;
+
+    public function __construct()
+    {
+        parent::__construct('test', true);
+    }
+
+    public function boot(): void
+    {
+        $this->didBoot = true;
+    }
+
+    public function registerBundles(): iterable
+    {
+        return [];
+    }
+
+    public function registerContainerConfiguration(LoaderInterface $loader): void
+    {
     }
 }
 
