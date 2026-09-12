@@ -8,14 +8,19 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
+use Doctrine\DBAL\Connection;
+use Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass\RemoveUnsatisfiableHooksPass;
+use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Imports the legacy raw-SQL schema files exposed by {@see SchemaFilesProviderInterface}.
+ * Installs the database schema built by {@see SchemaBuilderInterface::buildSchema()}, i.e. from
+ * every registered bundle's own SchemaBuilderEvent subscriber. Requires `DoctrineSchemaBundle` and
+ * `IbexaRepositoryInstallerBundle`; removed from the container when either is missing, by
+ * {@see RemoveUnsatisfiableHooksPass}.
  *
- * Enabled by default; pass `[self::OPTION_LOAD_SCHEMA => false]` as this hook's own options (keyed
- * by its own service id in the bootstrap options array) to skip it.
+ * Enabled by default; pass `[self::OPTION_LOAD_SCHEMA => false]` as this hook's own options to
+ * skip it.
  */
 final class DatabaseSchemaHook implements HookInterface
 {
@@ -27,16 +32,16 @@ final class DatabaseSchemaHook implements HookInterface
 
     public const OPTION_LOAD_SCHEMA = 'load_schema';
 
-    private SchemaFilesProviderInterface $provider;
+    private SchemaBuilderInterface $schemaBuilder;
 
-    private LegacySchemaImporter $schemaImporter;
+    private Connection $connection;
 
     public function __construct(
-        SchemaFilesProviderInterface $provider,
-        LegacySchemaImporter $schemaImporter
+        SchemaBuilderInterface $schemaBuilder,
+        Connection $connection
     ) {
-        $this->provider = $provider;
-        $this->schemaImporter = $schemaImporter;
+        $this->schemaBuilder = $schemaBuilder;
+        $this->connection = $connection;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -52,8 +57,11 @@ final class DatabaseSchemaHook implements HookInterface
             return;
         }
 
-        foreach ($this->provider->getSchemaFiles() ?? [] as $file) {
-            $this->schemaImporter->importSchema($file);
+        $schema = $this->schemaBuilder->buildSchema();
+        $platform = $this->connection->getDatabasePlatform();
+
+        foreach ($schema->toSql($platform) as $sql) {
+            $this->connection->executeStatement($sql);
         }
     }
 }
