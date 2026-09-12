@@ -8,10 +8,10 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -74,7 +74,7 @@ final class Bootstrapper
     public function bootstrap(
         ?string $kernelClass = null,
         array $options = []
-    ): IbexaTestKernel {
+    ): KernelInterface {
         $kernel = $this->kernelProvider->getKernel($kernelClass);
 
         $testContainer = self::getService($kernel->getContainer(), 'test.service_container', ContainerInterface::class);
