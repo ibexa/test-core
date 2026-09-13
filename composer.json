@@ -27,6 +27,9 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "symfony/phpunit-bridge": "^5.4"
     },
+    "conflict": {
+        "phpstan/phpstan": "2.2.13"
+    },
     "autoload": {
         "psr-4": {
             "Ibexa\\Bundle\\Test\\Core\\": "src/bundle/",
