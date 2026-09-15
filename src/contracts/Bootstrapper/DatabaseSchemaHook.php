@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
-use Doctrine\DBAL\Connection;
+use Ibexa\Contracts\DoctrineSchema\Builder\SchemaApplierInterface;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -33,12 +33,12 @@ final class DatabaseSchemaHook implements HookInterface
 
     private SchemaBuilderInterface $schemaBuilder;
 
-    private Connection $connection;
+    private SchemaApplierInterface $schemaApplier;
 
-    public function __construct(SchemaBuilderInterface $schemaBuilder, Connection $connection)
+    public function __construct(SchemaBuilderInterface $schemaBuilder, SchemaApplierInterface $schemaApplier)
     {
         $this->schemaBuilder = $schemaBuilder;
-        $this->connection = $connection;
+        $this->schemaApplier = $schemaApplier;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -54,11 +54,7 @@ final class DatabaseSchemaHook implements HookInterface
             return;
         }
 
-        $schema = $this->schemaBuilder->buildSchema();
-        $platform = $this->connection->getDatabasePlatform();
-
-        foreach ($schema->toSql($platform) as $sql) {
-            $this->connection->executeStatement($sql);
-        }
+        // the test database is always freshly created, so there is nothing to drop first
+        $this->schemaApplier->applySchema($this->schemaBuilder->buildSchema());
     }
 }

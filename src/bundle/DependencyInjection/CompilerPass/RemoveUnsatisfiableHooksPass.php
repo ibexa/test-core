@@ -10,6 +10,7 @@ namespace Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass;
 
 use Ibexa\Bundle\RepositoryInstaller\Event\Subscriber\BuildSchemaSubscriber;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
+use Ibexa\Contracts\DoctrineSchema\Builder\SchemaApplierInterface;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
@@ -30,6 +31,7 @@ final class RemoveUnsatisfiableHooksPass implements CompilerPassInterface
     private const HOOK_REQUIREMENTS = [
         DatabaseSchemaHook::class => [
             SchemaBuilderInterface::class,
+            SchemaApplierInterface::class,
             // core's own schema contribution; without it the event yields every other package's
             // tables but none of core's
             BuildSchemaSubscriber::class,
