@@ -7,3 +7,11 @@ parameters:
     paths:
         - src
         - tests
+    excludePaths:
+        analyse:
+            # Declares a class whose parent is deliberately absent, covering
+            # PersistenceCheckCompilerPass skipping service classes that cannot be loaded. The
+            # resulting class.notFound cannot be suppressed inline, because an extends clause is
+            # reported outside the reach of @phpstan-ignore. Excluded from analysis only, so the
+            # class stays known to the test that uses it.
+            - tests/bundle/DependencyInjection/CompilerPass/Stub/ServiceWithUninstalledParent.php
