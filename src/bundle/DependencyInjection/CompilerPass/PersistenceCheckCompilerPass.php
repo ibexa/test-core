@@ -30,7 +30,24 @@ final class PersistenceCheckCompilerPass implements CompilerPassInterface
                 continue;
             }
 
-            if (!is_a($class, AbstractDoctrineDatabase::class, true)) {
+            try {
+                $isDoctrineDatabaseGateway = is_a($class, AbstractDoctrineDatabase::class, true);
+            } catch (\Error $e) {
+                // Resolving the name autoloads the class, which fails outright when it extends or
+                // implements something from a dependency that is not installed — for instance
+                // api-platform/core's GraphQL scalar types, which extend a webonyx/graphql-php
+                // class that is only present when GraphQL support is actually in use.
+                //
+                // Only a class that failed to load is tolerated here. If it did load, the error
+                // came from somewhere else and is not ours to swallow.
+                if (class_exists($class, false) || interface_exists($class, false)) {
+                    throw $e;
+                }
+
+                continue;
+            }
+
+            if (!$isDoctrineDatabaseGateway) {
                 continue;
             }
 
