@@ -7,3 +7,8 @@ parameters:
     paths:
         - src
         - tests
+    excludePaths:
+        analyse:
+            # Extends a deliberately absent parent; @phpstan-ignore does not reach an extends
+            # clause. Analysis only, so the class stays known to the test that names it.
+            - tests/bundle/DependencyInjection/CompilerPass/Stub/ServiceWithUninstalledParent.php

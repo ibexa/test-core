@@ -20,6 +20,7 @@
         "phpunit/phpunit": "^9",
         "ibexa/code-style": "^2.0",
         "ibexa/core": "~5.0.x-dev",
+        "ibexa/core-persistence": "~5.0.x-dev",
         "ibexa/doctrine-schema": "~5.0.x-dev",
         "ibexa/rector": "~5.0.x-dev",
         "knplabs/knp-menu": "^3.3",
