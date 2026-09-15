@@ -20,9 +20,8 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * The service classes used here live in Stub/ next to this test. Referring to them by ::class is
- * safe: it is resolved at compile time and does not load anything, which matters because
- * {@see ServiceWithUninstalledParent} cannot be loaded at all by design.
+ * ::class is resolved at compile time and loads nothing, which is what makes it usable on
+ * {@see ServiceWithUninstalledParent}.
  *
  * @covers \Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass\PersistenceCheckCompilerPass
  */
@@ -32,34 +31,23 @@ final class PersistenceCheckCompilerPassTest extends TestCase
 
     private const OTHER_CONNECTION = 'doctrine.dbal.default_connection';
 
-    /**
-     * Spelled out as a string rather than imported: there is deliberately no such class, so naming
-     * it as a symbol would need a second suppression. This keeps the only one confined to
-     * {@see ServiceWithUninstalledParent}, the fixture that declares the broken inheritance.
-     */
+    /** A string, not an import: naming a non-existent class would need a second suppression. */
     private const MISSING_PARENT_CLASS = 'Ibexa\\Tests\\Bundle\\Test\\Core\\DependencyInjection\\CompilerPass\\Stub\\UninstalledDependency\\ParentFromUninstalledDependency';
 
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
 
-        // ibexa/core-persistence is not a dependency of this package, so the class the pass checks
-        // against has to be supplied or the pass returns early and tests nothing.
+        // Without this the pass returns early at its own guard and tests nothing.
         if (!class_exists(AbstractDoctrineDatabase::class)) {
             require_once __DIR__ . '/Stub/uninstalled_core_persistence.php';
         }
     }
 
-    /**
-     * Establishes the premise of the fix: resolving such a class name raises an Error naming the
-     * *parent*, which is what took down container compilation before it was handled.
-     */
     public function testResolvingAnUnloadableClassRaisesAnError(): void
     {
         try {
-            // PHPStan sees an unknown parent and concludes the call can only return false. What it
-            // cannot model is that resolving the name throws before returning anything at all,
-            // which is the behaviour under test.
+            // PHPStan cannot model that this throws rather than returning false.
             // @phpstan-ignore function.impossibleType
             $resolved = is_a(ServiceWithUninstalledParent::class, AbstractDoctrineDatabase::class, true);
 
@@ -69,8 +57,7 @@ final class PersistenceCheckCompilerPassTest extends TestCase
                 var_export($resolved, true)
             ));
         } catch (\Error $e) {
-            // Asserted on the class name rather than the whole message: PHP 7.4 renders it as
-            // Class 'X' not found and PHP 8 as Class "X" not found.
+            // PHP 7.4 renders Class 'X' not found, PHP 8 Class "X" not found.
             self::assertStringContainsString(
                 self::MISSING_PARENT_CLASS,
                 $e->getMessage(),
@@ -97,10 +84,6 @@ final class PersistenceCheckCompilerPassTest extends TestCase
         );
     }
 
-    /**
-     * The unloadable class must not cut the run short: a genuinely misconfigured gateway declared
-     * after it is still reported.
-     */
     public function testKeepsCheckingDefinitionsAfterAnUnloadableOne(): void
     {
         $container = new ContainerBuilder();
@@ -140,10 +123,6 @@ final class PersistenceCheckCompilerPassTest extends TestCase
         self::assertTrue($container->hasDefinition('gateway'));
     }
 
-    /**
-     * An Error raised for any reason other than the class failing to load is none of the pass's
-     * business and must not be swallowed.
-     */
     public function testRethrowsErrorRaisedByAClassThatDidLoad(): void
     {
         $container = new ContainerBuilder();
