@@ -12,6 +12,7 @@ use Ibexa\Contracts\Test\Core\Translation\AbstractTranslationCase;
 use JMS\TranslationBundle\Model\Message;
 use JMS\TranslationBundle\Translation\Comparison\ChangeSet;
 use PHPUnit\Framework\AssertionFailedError;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class AbstractTranslationCaseTest extends TestCase
@@ -23,9 +24,7 @@ final class AbstractTranslationCaseTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
-    /**
-     * @dataProvider provideChangeSetsWithPendingMessages
-     */
+    #[DataProvider('provideChangeSetsWithPendingMessages')]
     public function testChangeSetWithPendingMessagesFails(
         ChangeSet $changeSet,
         string $expectedMessage

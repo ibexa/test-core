@@ -10,12 +10,11 @@ namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Core\Search\VersatileHandler;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook
- */
+#[CoversClass(PurgeSearchIndexHook::class)]
 final class PurgeSearchIndexHookTest extends TestCase
 {
     public function testPurgeIndexOptionDefaultsToFalse(): void

@@ -21,9 +21,6 @@ abstract class AbstractTranslationCase extends IbexaKernelTestCase
      */
     abstract public static function provideConfigNamesForTranslation(): iterable;
 
-    /**
-     * @dataProvider provideConfigNamesForTranslation
-     */
     #[DataProvider('provideConfigNamesForTranslation')]
     final public function testTranslation(string $configName): void
     {

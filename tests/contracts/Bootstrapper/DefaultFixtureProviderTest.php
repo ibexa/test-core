@@ -10,11 +10,10 @@ namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\YamlFixture;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider
- */
+#[CoversClass(DefaultFixtureProvider::class)]
 final class DefaultFixtureProviderTest extends TestCase
 {
     public function testYieldsTheBuiltInBaseFixture(): void
