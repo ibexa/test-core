@@ -19,4 +19,6 @@ use Ibexa\Contracts\CorePersistence\Gateway\AbstractDoctrineDatabase;
  * ibexa/core-persistence were actually installed alongside {@see uninstalled_core_persistence.php}.
  * The pass only compares class names and never instantiates, so being abstract costs nothing.
  */
-abstract class Gateway extends AbstractDoctrineDatabase {}
+abstract class Gateway extends AbstractDoctrineDatabase
+{
+}

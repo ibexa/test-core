@@ -19,4 +19,6 @@ namespace Ibexa\Contracts\CorePersistence\Gateway;
  * deliberately by the test rather than by the autoloader, and only when the real package is
  * absent.
  */
-abstract class AbstractDoctrineDatabase {}
+abstract class AbstractDoctrineDatabase
+{
+}

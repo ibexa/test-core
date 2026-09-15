@@ -17,6 +17,8 @@ namespace Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub;
  * reading a constant off this class would load it, and the throw below would then go off before
  * the test under way had a chance to set anything up.
  */
-final class ServiceFailingAfterDeclaration {}
+final class ServiceFailingAfterDeclaration
+{
+}
 
 throw new \Error('failure unrelated to loading');

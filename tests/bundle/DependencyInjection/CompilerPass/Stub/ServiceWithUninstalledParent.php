@@ -24,4 +24,6 @@ use Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub\Uninstall
  * outside the reach of @phpstan-ignore, so this one file is listed under excludePaths.analyse in
  * phpstan.neon instead; it is still scanned, so the class itself stays known everywhere else.
  */
-final class ServiceWithUninstalledParent extends ParentFromUninstalledDependency {}
+final class ServiceWithUninstalledParent extends ParentFromUninstalledDependency
+{
+}

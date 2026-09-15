@@ -11,4 +11,6 @@ namespace Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub;
 /**
  * An ordinary service class: loads without trouble and is not a Doctrine database gateway.
  */
-final class PlainService {}
+final class PlainService
+{
+}
