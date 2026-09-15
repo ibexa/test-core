@@ -11,8 +11,9 @@ namespace Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub;
 use Ibexa\Contracts\CorePersistence\Gateway\AbstractDoctrineDatabase;
 
 /**
- * Abstract on purpose: the real AbstractDoctrineDatabase declares abstract members, so a concrete
- * subclass would stop loading if ibexa/core-persistence were ever installed here.
+ * Abstract because AbstractDoctrineDatabase declares abstract members the pass does not need.
+ *
+ * @extends AbstractDoctrineDatabase<array<string, mixed>>
  */
 abstract class Gateway extends AbstractDoctrineDatabase
 {

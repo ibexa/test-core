@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass;
 
 use Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass\PersistenceCheckCompilerPass;
-use Ibexa\Contracts\CorePersistence\Gateway\AbstractDoctrineDatabase;
 use Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub\Gateway;
 use Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub\PlainService;
 use Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub\ServiceFailingAfterDeclaration;
@@ -30,16 +29,6 @@ final class PersistenceCheckCompilerPassTest extends TestCase
     private const EXPECTED_CONNECTION = 'ibexa.persistence.connection';
 
     private const OTHER_CONNECTION = 'doctrine.dbal.default_connection';
-
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-
-        // Without this the pass returns early at its own guard and tests nothing.
-        if (!class_exists(AbstractDoctrineDatabase::class)) {
-            require_once __DIR__ . '/Stub/uninstalled_core_persistence.php';
-        }
-    }
 
     public function testSkipsServiceWhoseClassCannotBeLoaded(): void
     {
