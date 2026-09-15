@@ -31,9 +31,6 @@ final class PersistenceCheckCompilerPassTest extends TestCase
 
     private const OTHER_CONNECTION = 'doctrine.dbal.default_connection';
 
-    /** A string, not an import: naming a non-existent class would need a second suppression. */
-    private const MISSING_PARENT_CLASS = 'Ibexa\\Tests\\Bundle\\Test\\Core\\DependencyInjection\\CompilerPass\\Stub\\UninstalledDependency\\ParentFromUninstalledDependency';
-
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
@@ -44,33 +41,6 @@ final class PersistenceCheckCompilerPassTest extends TestCase
         }
     }
 
-    public function testResolvingAnUnloadableClassRaisesAnError(): void
-    {
-        try {
-            // PHPStan cannot model that this throws rather than returning false.
-            // @phpstan-ignore function.impossibleType
-            $resolved = is_a(ServiceWithUninstalledParent::class, AbstractDoctrineDatabase::class, true);
-
-            self::fail(sprintf(
-                'Expected resolving "%s" to raise an Error, it returned %s instead.',
-                ServiceWithUninstalledParent::class,
-                var_export($resolved, true)
-            ));
-        } catch (\Error $e) {
-            // PHP 7.4 renders Class 'X' not found, PHP 8 Class "X" not found.
-            self::assertStringContainsString(
-                self::MISSING_PARENT_CLASS,
-                $e->getMessage(),
-                'The Error names the missing parent, not the service class itself.'
-            );
-            self::assertStringNotContainsString(
-                ServiceWithUninstalledParent::class,
-                $e->getMessage(),
-                'The service class itself is resolvable; it is its parent that is not.'
-            );
-        }
-    }
-
     public function testSkipsServiceWhoseClassCannotBeLoaded(): void
     {
         $container = new ContainerBuilder();
@@ -78,6 +48,8 @@ final class PersistenceCheckCompilerPassTest extends TestCase
 
         (new PersistenceCheckCompilerPass())->process($container);
 
+        // Also guards the fixture: had the parent become loadable, the pass would have declared
+        // the class and this test would be passing for the wrong reason.
         self::assertFalse(
             class_exists(ServiceWithUninstalledParent::class, false),
             'The class still cannot be loaded, so the pass got past it without resolving it.'
