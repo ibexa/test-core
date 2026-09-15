@@ -24,7 +24,7 @@ final class ContainsPath extends Constraint
         $this->path = $path;
     }
 
-    protected function matches($other): bool
+    protected function matches(mixed $other): bool
     {
         assert($other instanceof ItemInterface);
 

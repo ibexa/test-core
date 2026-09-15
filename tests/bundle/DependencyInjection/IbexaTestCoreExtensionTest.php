@@ -10,12 +10,11 @@ namespace Ibexa\Tests\Bundle\Test\Core\DependencyInjection;
 
 use Ibexa\Bundle\Test\Core\DependencyInjection\IbexaTestCoreExtension;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * @covers \Ibexa\Bundle\Test\Core\DependencyInjection\IbexaTestCoreExtension
- */
+#[CoversClass(IbexaTestCoreExtension::class)]
 final class IbexaTestCoreExtensionTest extends TestCase
 {
     public function testRegistersNoServicesOutsideTheTestEnvironment(): void

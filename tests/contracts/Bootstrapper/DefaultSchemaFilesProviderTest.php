@@ -9,12 +9,11 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider
- */
+#[CoversClass(DefaultSchemaFilesProvider::class)]
 final class DefaultSchemaFilesProviderTest extends TestCase
 {
     public function testYieldsSchemaFileResolvedThroughTheKernel(): void
