@@ -11,14 +11,14 @@ namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 use Ibexa\Contracts\Test\Core\Bootstrapper\KernelProvider;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\HttpKernel\Kernel;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\KernelProvider
- */
+#[CoversClass(KernelProvider::class)]
 final class KernelProviderTest extends TestCase
 {
     /**
@@ -53,10 +53,8 @@ final class KernelProviderTest extends TestCase
         }
     }
 
-    /**
-     * @testWith [null, "The kernel class \"null\" must implement \"Symfony\\Component\\HttpKernel\\KernelInterface\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
-     *           ["stdClass", "The kernel class \"stdClass\" must implement \"Symfony\\Component\\HttpKernel\\KernelInterface\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
-     */
+    #[TestWith([null, 'The kernel class "null" must implement "Symfony\Component\HttpKernel\KernelInterface". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class.'])]
+    #[TestWith(['stdClass', 'The kernel class "stdClass" must implement "Symfony\Component\HttpKernel\KernelInterface". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class.'])]
     public function testThrowsWhenKernelClassIsInvalid(
         ?string $kernelClass,
         string $exceptionMessage

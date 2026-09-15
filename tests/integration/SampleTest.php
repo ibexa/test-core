@@ -9,12 +9,11 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Integration\Test\Core;
 
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group integration
- *
- * @coversNothing
- */
+#[Group('integration')]
+#[CoversNothing]
 final class SampleTest extends IbexaKernelTestCase
 {
     public function testCompilesSuccessfully(): void

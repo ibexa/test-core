@@ -10,14 +10,13 @@ namespace Ibexa\Tests\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/**
- * @covers \Ibexa\Test\Core\Bootstrapper\HooksExecutor
- */
+#[CoversClass(HooksExecutor::class)]
 final class HooksExecutorTest extends TestCase
 {
     public function testConfigureOptionsRejectsUnrecognizedTopLevelKey(): void

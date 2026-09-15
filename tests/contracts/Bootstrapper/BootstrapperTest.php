@@ -13,15 +13,15 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\DatabasePreparerInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper
- */
+#[CoversClass(Bootstrapper::class)]
 final class BootstrapperTest extends TestCase
 {
     /**
@@ -180,11 +180,10 @@ final class BootstrapperTest extends TestCase
     }
 
     /**
-     * @testWith [{"some.unknown.key": {}}]
-     *           [{"Ibexa\\Contracts\\Test\\Core\\Bootstrapper\\Bootstrapper": {"some_unknown_option": true}}]
-     *
      * @param array<string, mixed> $options
      */
+    #[TestWith([['some.unknown.key' => []]])]
+    #[TestWith([['Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper' => ['some_unknown_option' => true]]])]
     public function testRejectsAnUnrecognizedOptions(array $options): void
     {
         $this->expectException(UndefinedOptionsException::class);
