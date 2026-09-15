@@ -30,7 +30,19 @@ final class PersistenceCheckCompilerPass implements CompilerPassInterface
                 continue;
             }
 
-            if (!is_a($class, AbstractDoctrineDatabase::class, true)) {
+            try {
+                $isDoctrineDatabaseGateway = is_a($class, AbstractDoctrineDatabase::class, true);
+            } catch (\Error $e) {
+                // is_a() autoloads $class, which fails outright when its parent comes from an
+                // uninstalled dependency. A class that did load means the Error is unrelated.
+                if (class_exists($class, false) || interface_exists($class, false)) {
+                    throw $e;
+                }
+
+                continue;
+            }
+
+            if (!$isDoctrineDatabaseGateway) {
                 continue;
             }
 
