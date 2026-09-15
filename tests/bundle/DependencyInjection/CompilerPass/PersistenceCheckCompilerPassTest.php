@@ -130,10 +130,17 @@ final class PersistenceCheckCompilerPassTest extends TestCase
                 var_export($resolved, true)
             ));
         } catch (\Error $e) {
-            self::assertSame(
-                sprintf('Class "%s" not found', self::NOT_INSTALLED_CLASS),
+            // Asserted on the class name rather than the whole message: PHP 7.4 renders it as
+            // Class 'X' not found and PHP 8 as Class "X" not found.
+            self::assertStringContainsString(
+                self::NOT_INSTALLED_CLASS,
                 $e->getMessage(),
                 'The Error names the missing parent, not the service class itself.'
+            );
+            self::assertStringNotContainsString(
+                self::UNLOADABLE_CLASS,
+                $e->getMessage(),
+                'The service class itself is resolvable; it is its parent that is not.'
             );
         }
     }
