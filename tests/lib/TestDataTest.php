@@ -8,13 +8,12 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Test\Core;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SimpleXMLElement;
 use Symfony\Component\Yaml\Yaml;
 
-/**
- * @coversNothing
- */
+#[CoversNothing]
 final class TestDataTest extends TestCase
 {
     private const string TEST_DATA_FILE = __DIR__ . '/../../src/contracts/Resources/test_data.yaml';

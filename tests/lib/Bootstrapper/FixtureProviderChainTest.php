@@ -11,11 +11,10 @@ namespace Ibexa\Tests\Test\Core\Bootstrapper;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Test\Core\Bootstrapper\FixtureProviderChain;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Ibexa\Test\Core\Bootstrapper\FixtureProviderChain
- */
+#[CoversClass(FixtureProviderChain::class)]
 final class FixtureProviderChainTest extends TestCase
 {
     public function testSkipsProvidersReturningNull(): void

@@ -9,13 +9,12 @@ declare(strict_types=1);
 namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 
 use Ibexa\Contracts\Test\Core\Bootstrapper\ConsoleCommandRunner;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\ConsoleCommandRunner
- */
+#[CoversClass(ConsoleCommandRunner::class)]
 final class ConsoleCommandRunnerTest extends TestCase
 {
     public function testDoesNothingOnSuccess(): void

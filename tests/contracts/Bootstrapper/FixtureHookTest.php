@@ -14,12 +14,11 @@ use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook
- */
+#[CoversClass(FixtureHook::class)]
 final class FixtureHookTest extends TestCase
 {
     public function testLoadFixturesOptionDefaultsToTrue(): void
@@ -53,7 +52,7 @@ final class FixtureHookTest extends TestCase
         $provider = $this->createMock(FixtureProviderInterface::class);
         $provider->expects(self::never())->method('getFixtures');
 
-        $hook = new FixtureHook($provider, new FixtureImporter($this->createMock(Connection::class)));
+        $hook = new FixtureHook($provider, new FixtureImporter($this->createStub(Connection::class)));
         $hook($this->resolve($hook, [FixtureHook::OPTION_LOAD_FIXTURES => false]));
     }
 
@@ -80,7 +79,7 @@ final class FixtureHookTest extends TestCase
         $provider = $this->createMock(FixtureProviderInterface::class);
         $provider->method('getFixtures')->willReturn($fixtures);
 
-        $fixtureImporter = new FixtureImporter($this->createMock(Connection::class));
+        $fixtureImporter = new FixtureImporter($this->createStub(Connection::class));
 
         return new FixtureHook($provider, $fixtureImporter);
     }

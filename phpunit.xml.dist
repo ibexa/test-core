@@ -1,28 +1,24 @@
-<phpunit
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
-        bootstrap="vendor/autoload.php"
-        failOnWarning="true"
-        colors="true">
-    <php>
-        <env name="KERNEL_CLASS" value="Ibexa\Tests\Integration\Test\Core\TestKernel" />
-        <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/>
-    </php>
-    <testsuites>
-        <testsuite name="bundle">
-            <directory>tests/bundle</directory>
-        </testsuite>
-        <testsuite name="contracts">
-            <directory>tests/contracts</directory>
-        </testsuite>
-        <testsuite name="integration">
-            <directory>tests/integration</directory>
-        </testsuite>
-        <testsuite name="lib">
-            <directory>tests/lib</directory>
-        </testsuite>
-    </testsuites>
-    <listeners>
-        <listener class="Symfony\Bridge\PhpUnit\SymfonyTestsListener"/>
-    </listeners>
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd" bootstrap="vendor/autoload.php" failOnWarning="true" colors="true" cacheDirectory=".phpunit.cache">
+  <php>
+    <env name="KERNEL_CLASS" value="Ibexa\Tests\Integration\Test\Core\TestKernel"/>
+    <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/>
+  </php>
+  <extensions>
+    <bootstrap class="Symfony\Bridge\PhpUnit\SymfonyExtension"/>
+  </extensions>
+  <testsuites>
+    <testsuite name="bundle">
+      <directory>tests/bundle</directory>
+    </testsuite>
+    <testsuite name="contracts">
+      <directory>tests/contracts</directory>
+    </testsuite>
+    <testsuite name="integration">
+      <directory>tests/integration</directory>
+    </testsuite>
+    <testsuite name="lib">
+      <directory>tests/lib</directory>
+    </testsuite>
+  </testsuites>
 </phpunit>
