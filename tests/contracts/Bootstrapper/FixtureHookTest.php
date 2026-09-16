@@ -52,7 +52,7 @@ final class FixtureHookTest extends TestCase
         $provider = $this->createMock(FixtureProviderInterface::class);
         $provider->expects(self::never())->method('getFixtures');
 
-        $hook = new FixtureHook($provider, new FixtureImporter(self::createStub(Connection::class)));
+        $hook = new FixtureHook($provider, new FixtureImporter($this->createStub(Connection::class)));
         $hook($this->resolve($hook, [FixtureHook::OPTION_LOAD_FIXTURES => false]));
     }
 
@@ -79,7 +79,7 @@ final class FixtureHookTest extends TestCase
         $provider = $this->createMock(FixtureProviderInterface::class);
         $provider->method('getFixtures')->willReturn($fixtures);
 
-        $fixtureImporter = new FixtureImporter(self::createStub(Connection::class));
+        $fixtureImporter = new FixtureImporter($this->createStub(Connection::class));
 
         return new FixtureHook($provider, $fixtureImporter);
     }
