@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<files version="1">
+ <file path="vendor/symfony/error-handler/DebugClassLoader.php">
+  <line number="363" hash="fa7c41d0a475fe381404d497814e227243716c10">
+   <issue><![CDATA[The "Symfony\Component\HttpKernel\DependencyInjection\Extension" class is considered internal since Symfony 7.1, to be deprecated in 8.1; use Symfony\Component\DependencyInjection\Extension\Extension instead. It may change without further notice. You should not use it from "JMS\TranslationBundle\DependencyInjection\JMSTranslationExtension".]]></issue>
+   <issue><![CDATA[Method "Twig\Extension\ExtensionInterface::getFilters()" might add "array" as a native return type declaration in the future. Do the same in implementation "Liip\ImagineBundle\Templating\FilterExtension" now to avoid errors or add an explicit @return annotation to suppress this message.]]></issue>
+  </line>
+  <line number="391" hash="fa7c41d0a475fe381404d497814e227243716c10">
+   <issue><![CDATA[The "Symfony\Component\HttpKernel\DependencyInjection\Extension" class is considered internal since Symfony 7.1, to be deprecated in 8.1; use Symfony\Component\DependencyInjection\Extension\Extension instead. It may change without further notice. You should not use it from "JMS\TranslationBundle\DependencyInjection\JMSTranslationExtension".]]></issue>
+   <issue><![CDATA[Method "Twig\Extension\ExtensionInterface::getFilters()" might add "array" as a native return type declaration in the future. Do the same in implementation "Liip\ImagineBundle\Templating\FilterExtension" now to avoid errors or add an explicit @return annotation to suppress this message.]]></issue>
+  </line>
+ </file>
+ <file path="vendor/league/flysystem/src/Local/LocalFilesystemAdapter.php">
+  <line number="84" hash="ceb043f6ab1e59b0d2e3038886d66ec328517fc4">
+   <issue><![CDATA[League\Flysystem\Local\LocalFilesystemAdapter::__construct(): Implicitly marking parameter $visibility as nullable is deprecated, the explicit nullable type must be used instead]]></issue>
+  </line>
+  <line number="87" hash="165df3579a764873c0a79588b58033eeea0f5bc2">
+   <issue><![CDATA[League\Flysystem\Local\LocalFilesystemAdapter::__construct(): Implicitly marking parameter $mimeTypeDetector as nullable is deprecated, the explicit nullable type must be used instead]]></issue>
+  </line>
+ </file>
+ <file path="vendor/symfony/deprecation-contracts/function.php">
+  <line number="25" hash="c6af5d66288d0667e424978000f29571e4954b81">
+   <issue><![CDATA[Since symfony/dependency-injection 7.4: XML configuration format is deprecated, use YAML or PHP instead.]]></issue>
+   <issue><![CDATA[Since symfony/dependency-injection 7.4: XML configuration format is deprecated, use YAML or PHP instead.]]></issue>
+  </line>
+ </file>
+ <file path="vendor/ibexa/core/src/bundle/Core/DependencyInjection/Compiler/SlugConverterConfigurationPass.php">
+  <line number="62" hash="46c20ceb34da10cf5e5ad5215b58d86570f0d771">
+   <issue><![CDATA[Relying on default url_alias.slug_converter.transformation setting ("urlalias") is deprecated and might change in the next major. Set it explicitly to one of the following: urlalias, urlalias_iri, urlalias_compat, urlalias_lowercase]]></issue>
+  </line>
+ </file>
+ <file path="vendor/liip/imagine-bundle/Templating/FilterExtension.php">
+  <line number="14" hash="f4f0cf6b5f73efa05c9bcbf20e3c58dfcfbf2bc7">
+   <issue><![CDATA[The Liip\ImagineBundle\Templating\FilterExtension class is deprecated since version 2.7 and will be removed in 3.0; configure "liip_imagine.twig.mode" to "lazy" instead.]]></issue>
+  </line>
+ </file>
+ <file path="vendor/liip/imagine-bundle/Templating/FilterTrait.php">
+  <line number="14" hash="d658344ee2c4e3c959185f70989e24f2e6e37cb6">
+   <issue><![CDATA[The Liip\ImagineBundle\Templating\FilterTrait trait is deprecated since version 2.7 and will be removed in 3.0; use Twig instead.]]></issue>
+  </line>
+ </file>
+ <file path="vendor/league/flysystem/src/Filesystem.php">
+  <line number="24" hash="ceb043f6ab1e59b0d2e3038886d66ec328517fc4">
+   <issue><![CDATA[League\Flysystem\Filesystem::__construct(): Implicitly marking parameter $pathNormalizer as nullable is deprecated, the explicit nullable type must be used instead]]></issue>
+  </line>
+ </file>
+ <file path="vendor/league/flysystem-memory/InMemoryFilesystemAdapter.php">
+  <line number="39" hash="e01d94d4fe594d9dca588d9fe70212b4c6809588">
+   <issue><![CDATA[League\Flysystem\InMemory\InMemoryFilesystemAdapter::__construct(): Implicitly marking parameter $mimeTypeDetector as nullable is deprecated, the explicit nullable type must be used instead]]></issue>
+  </line>
+ </file>
+</files>

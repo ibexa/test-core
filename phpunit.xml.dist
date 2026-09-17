@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd" bootstrap="vendor/autoload.php" failOnWarning="true" colors="true" cacheDirectory=".phpunit.cache">
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd" bootstrap="vendor/autoload.php" failOnWarning="true" colors="true" cacheDirectory=".phpunit.cache" displayDetailsOnTestsThatTriggerDeprecations="true" failOnDeprecation="true">
   <php>
     <env name="KERNEL_CLASS" value="Ibexa\Tests\Integration\Test\Core\TestKernel"/>
-    <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/>
   </php>
   <extensions>
     <bootstrap class="Symfony\Bridge\PhpUnit\SymfonyExtension"/>
@@ -21,4 +20,11 @@
       <directory>tests/lib</directory>
     </testsuite>
   </testsuites>
+  <source baseline="phpunit.baseline.xml" ignoreIndirectDeprecations="false" ignoreSuppressionOfDeprecations="true">
+    <include>
+      <directory>src/bundle</directory>
+      <directory>src/contracts</directory>
+      <directory>src/lib</directory>
+    </include>
+  </source>
 </phpunit>
