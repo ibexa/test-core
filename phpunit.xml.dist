@@ -3,9 +3,6 @@
   <php>
     <env name="KERNEL_CLASS" value="Ibexa\Tests\Integration\Test\Core\TestKernel"/>
   </php>
-  <extensions>
-    <bootstrap class="Symfony\Bridge\PhpUnit\SymfonyExtension"/>
-  </extensions>
   <testsuites>
     <testsuite name="bundle">
       <directory>tests/bundle</directory>
