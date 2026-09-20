@@ -18,7 +18,6 @@ use Ibexa\Bundle\RepositoryInstaller\IbexaRepositoryInstallerBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapter;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapterInterface;
@@ -134,11 +133,19 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     }
 
     /**
+     * @deprecated 4.6.x - kept for backwards compatibility only. Declare a kernel's fixtures with
+     *   the `ibexa.test.fixture_files` parameter, or with a service tagged
+     *   {@see \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface::TAG}, instead.
+     *
+     * Returns nothing: the baseline repository content this used to yield is imported
+     * unconditionally by {@see \Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook}, so
+     * yielding it here as well would import it twice.
+     *
      * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
      */
     public function getFixtures(): iterable
     {
-        yield from (new DefaultFixtureProvider())->getFixtures();
+        return [];
     }
 
     public function getCacheDir(): string
