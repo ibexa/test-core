@@ -67,7 +67,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->tag(HookInterface::TAG, ['priority' => DatabaseSchemaHook::PRIORITY]);
 
     $services->set(BaseFixtureHook::class)
-        ->arg('$provider', service(DefaultFixtureProvider::class))
         ->tag(HookInterface::TAG, ['priority' => BaseFixtureHook::PRIORITY]);
 
     $services->set(FixtureHook::class)

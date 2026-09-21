@@ -44,14 +44,25 @@ final class BaseFixtureHookTest extends TestCase
 
     public function testImportsTheBaselineByDefault(): void
     {
+        $provider = new DefaultFixtureProvider();
+
+        $expectedTables = [];
+        foreach ($provider->getFixtures() as $fixture) {
+            foreach ($fixture->load() as $table => $rows) {
+                if (!empty($rows)) {
+                    $expectedTables[] = $table;
+                }
+            }
+        }
+
         $inserted = [];
         $connection = $this->connectionRecordingInserts($inserted);
 
-        $hook = new BaseFixtureHook(new DefaultFixtureProvider(), new FixtureImporter($connection));
+        $hook = new BaseFixtureHook($provider, new FixtureImporter($connection));
         $hook($this->resolve($hook, []));
 
-        self::assertNotEmpty($inserted, 'Expected the baseline fixture to be imported');
-        self::assertContains('ezcontentobject', $inserted);
+        self::assertNotEmpty($expectedTables, 'Expected the baseline fixture to carry rows');
+        self::assertSame($expectedTables, array_values(array_unique($inserted)));
     }
 
     public function testDoesNotTouchTheDatabaseWhenDisabled(): void

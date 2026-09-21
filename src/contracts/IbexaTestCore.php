@@ -23,6 +23,7 @@ use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Core\Repository\Values\User\UserReference;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -87,6 +88,15 @@ final class IbexaTestCore implements IbexaTestCoreInterface
      */
     public function getFixtures(): iterable
     {
+        // IbexaTestKernel no longer contributes the baseline from getFixtures() - under the
+        // Bootstrapper it is imported by BaseFixtureHook instead - so this path, which
+        // never runs the hooks, has to supply it. Only for that kernel: any other
+        // IbexaTestKernelInterface implementation brings a baseline of its own (ibexa/core's
+        // same-named kernel, for one), and prepending this one would import two of them.
+        if ($this->kernel instanceof IbexaTestKernel) {
+            yield from (new DefaultFixtureProvider())->getFixtures();
+        }
+
         yield from $this->kernel->getFixtures();
     }
 
