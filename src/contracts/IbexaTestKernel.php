@@ -125,6 +125,13 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     }
 
     /**
+     * @deprecated 4.6.31 The "IbexaTestKernel::getSchemaFiles()" method is deprecated, will be
+     *   removed in 6.0. The test schema is built from the SchemaBuilderEvent by
+     *   {@see \Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook} - whichever bundles a
+     *   kernel registers is what the schema contains - so a kernel no longer declares schema files
+     *   and overriding this serves no purpose. Retained because
+     *   {@see \Ibexa\Contracts\Core\Test\IbexaTestKernelInterface} still mandates it.
+     *
      * @return iterable<string>
      */
     public function getSchemaFiles(): iterable
@@ -133,9 +140,10 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     }
 
     /**
-     * @deprecated 4.6.x - kept for backwards compatibility only. Declare a kernel's fixtures with
-     *   the `ibexa.test.fixture_files` parameter, or with a service tagged
-     *   {@see \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface::TAG}, instead.
+     * @deprecated 4.6.31 The "IbexaTestKernel::getFixtures()" method is deprecated, will be removed in
+     *   6.0. Declare a kernel's fixtures with the `ibexa.test.fixture_files` parameter, or with a
+     *   service tagged {@see \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface::TAG},
+     *   instead.
      *
      * Returns nothing: the baseline repository content this used to yield is imported
      * unconditionally by {@see \Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook}, so
