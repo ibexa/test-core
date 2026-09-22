@@ -30,7 +30,7 @@ final class KernelProvider implements KernelProviderInterface
         $kernel = new $kernelClass('test', true);
         $kernel->boot();
 
-        SymfonyErrorHandlerRestorer::restoreIfSymfonyHandlerIsOnTop();
+        (new SymfonyErrorHandlerRestorer())->restoreIfSymfonyHandlerIsOnTop();
 
         return $kernel;
     }

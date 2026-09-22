@@ -43,16 +43,12 @@ abstract class IbexaKernelTestCase extends KernelTestCase
 
     /**
      * @param array<string, mixed> $options
-     *
-     * FrameworkBundle::boot() (invoked by the parent's kernel boot) may leave Symfony's own
-     * ErrorHandler on top of the handler stack, which stops PHPUnit's own error handler from
-     * installing itself - see {@see SymfonyErrorHandlerRestorer} for the full explanation.
      */
     protected static function bootKernel(array $options = []): KernelInterface
     {
         $kernel = parent::bootKernel($options);
 
-        SymfonyErrorHandlerRestorer::restoreIfSymfonyHandlerIsOnTop();
+        (new SymfonyErrorHandlerRestorer())->restoreIfSymfonyHandlerIsOnTop();
 
         return $kernel;
     }

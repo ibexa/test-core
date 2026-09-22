@@ -20,7 +20,7 @@ final class SymfonyErrorHandlerRestorerTest extends TestCase
     {
         set_error_handler([new ErrorHandler(), 'handleError']);
 
-        SymfonyErrorHandlerRestorer::restoreIfSymfonyHandlerIsOnTop();
+        (new SymfonyErrorHandlerRestorer())->restoreIfSymfonyHandlerIsOnTop();
 
         self::assertFalse(
             self::isSymfonyErrorHandlerActive(),
@@ -32,7 +32,7 @@ final class SymfonyErrorHandlerRestorerTest extends TestCase
     {
         $before = self::peekActiveHandler();
 
-        SymfonyErrorHandlerRestorer::restoreIfSymfonyHandlerIsOnTop();
+        (new SymfonyErrorHandlerRestorer())->restoreIfSymfonyHandlerIsOnTop();
 
         self::assertSame(
             $before,
