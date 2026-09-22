@@ -8,122 +8,69 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Integration\Test\Core;
 
-use Ibexa\Contracts\Test\Core\Bootstrapper\KernelProvider;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Runtime\SymfonyRuntime;
 
 /**
- * A kernel booted from a `<bootstrap>` file runs before PHPUnit installs its error handler. Without
- * symfony/runtime, FrameworkBundle::boot() then installs Symfony's ErrorHandler in that empty slot and
- * PHPUnit's never activates, so failOnDeprecation silently catches nothing. Only a real PHPUnit
- * subprocess reproduces that ordering.
+ * A kernel booted from a PHPUnit `<bootstrap>` file boots before PHPUnit installs its error handler. If
+ * FrameworkBundle::boot() registers Symfony's ErrorHandler on that empty stack, PHPUnit's handler never
+ * activates and failOnDeprecation silently catches nothing. With symfony/runtime installed,
+ * FrameworkBundle::boot() leaves the stack alone.
  */
 #[Group('integration')]
 #[CoversNothing]
 final class DeprecationGateAfterBootstrapKernelBootTest extends TestCase
 {
-    private const string PROBE_MESSAGE = 'gate probe deprecation';
-
-    private string $workDir;
-
-    protected function setUp(): void
+    public function testKernelBootLeavesAnEmptyErrorHandlerStackEmpty(): void
     {
-        $this->workDir = sys_get_temp_dir() . '/ibexa-test-core-gate-' . bin2hex(random_bytes(6));
-        (new Filesystem())->mkdir($this->workDir);
-    }
+        $exceptionHandler = set_exception_handler(null);
+        restore_exception_handler();
 
-    protected function tearDown(): void
-    {
-        (new Filesystem())->remove($this->workDir);
-    }
+        // PHPUnit's handler is active inside a test. Hide it so boot() sees the empty stack a <bootstrap> file sees.
+        set_error_handler(null);
 
-    public function testSymfonyRuntimeIsRequired(): void
-    {
-        self::assertTrue(
-            class_exists(SymfonyRuntime::class),
-            'symfony/runtime must stay a hard requirement of ibexa/test-core: FrameworkBundle::boot() skips '
-            . 'ErrorHandler::register() only when SymfonyRuntime exists, and that registration blocks PHPUnit\'s '
-            . 'own error handler when a kernel is booted from a <bootstrap> file.',
+        try {
+            $kernel = new TestKernel('test', true);
+            $kernel->boot();
+            $installed = get_error_handler();
+            $kernel->shutdown();
+        } finally {
+            // Pop whatever boot() pushed on top of the null handler, then the null handler itself.
+            for ($i = 0; $i < 8 && get_error_handler() !== null; ++$i) {
+                restore_error_handler();
+            }
+            restore_error_handler();
+
+            // ErrorHandler::register() pushes an exception handler as well.
+            for ($i = 0; $i < 8; ++$i) {
+                $top = set_exception_handler(null);
+                restore_exception_handler();
+                if ($top === $exceptionHandler) {
+                    break;
+                }
+                restore_exception_handler();
+            }
+        }
+
+        self::assertNull(
+            $this->describe($installed),
+            'FrameworkBundle::boot() installed an error handler on an empty stack. Booted from a PHPUnit <bootstrap> '
+            . 'file, that handler would stay in place, PHPUnit\'s own handler would never activate and '
+            . 'failOnDeprecation would catch nothing. Is symfony/runtime installed?',
         );
     }
 
-    public function testDeprecationGateFiresAfterKernelBootInBootstrapFile(): void
+    private function describe(?callable $handler): ?string
     {
-        $projectDir = dirname(__DIR__, 2);
-        $this->writeFile('bootstrap.php', sprintf(
-            "<?php\nrequire %s;\n(new %s())->getKernel(%s::class);\n",
-            var_export($projectDir . '/vendor/autoload.php', true),
-            KernelProvider::class,
-            TestKernel::class,
-        ));
-        $this->writeFile('GateProbeTest.php', sprintf(
-            "<?php\nfinal class GateProbeTest extends \\PHPUnit\\Framework\\TestCase\n{\n"
-            . "    public function testTriggersADeprecation(): void\n    {\n"
-            . "        trigger_deprecation('ibexa/test-core', '6.0', %s);\n"
-            . "        self::assertTrue(true);\n    }\n}\n",
-            var_export(self::PROBE_MESSAGE, true),
-        ));
-        $this->writeFile('phpunit.xml', sprintf(
-            '<?xml version="1.0"?>
-<phpunit bootstrap="%1$s/bootstrap.php" failOnDeprecation="true" displayDetailsOnTestsThatTriggerDeprecations="true" colors="false" cacheDirectory="%1$s/.phpunit.cache">
-    <testsuites>
-        <testsuite name="probe">
-            <file>%1$s/GateProbeTest.php</file>
-        </testsuite>
-    </testsuites>
-    <source ignoreIndirectDeprecations="false" ignoreSuppressionOfDeprecations="true">
-        <include>
-            <directory>%1$s</directory>
-        </include>
-    </source>
-</phpunit>
-',
-            $this->workDir,
-        ));
+        if ($handler === null) {
+            return null;
+        }
 
-        [$exitCode, $output] = $this->runPhpUnit($projectDir, $this->workDir . '/phpunit.xml');
+        if (is_array($handler) && is_object($handler[0])) {
+            return $handler[0]::class . '::' . $handler[1];
+        }
 
-        $diagnostic = sprintf(
-            "PHPUnit's deprecation gate did not fire after a kernel boot in the <bootstrap> file: FrameworkBundle::boot() "
-            . "left Symfony's ErrorHandler in place and PHPUnit's own handler never activated. Is symfony/runtime installed?\n"
-            . "Subprocess exit code: %d\nSubprocess output:\n%s",
-            $exitCode,
-            $output,
-        );
-        self::assertStringContainsString(self::PROBE_MESSAGE, $output, $diagnostic);
-        self::assertStringContainsString('Deprecations: 1', $output, $diagnostic);
-        self::assertNotSame(0, $exitCode, $diagnostic);
-    }
-
-    private function writeFile(
-        string $name,
-        string $content
-    ): void {
-        (new Filesystem())->dumpFile($this->workDir . '/' . $name, $content);
-    }
-
-    /**
-     * @return array{int, string}
-     */
-    private function runPhpUnit(
-        string $projectDir,
-        string $configFile
-    ): array {
-        $process = proc_open(
-            [PHP_BINARY, $projectDir . '/vendor/bin/phpunit', '--configuration', $configFile],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
-            $pipes,
-            $this->workDir,
-        );
-        self::assertIsResource($process, 'Failed to start the PHPUnit subprocess.');
-
-        $output = (string)stream_get_contents($pipes[1]) . (string)stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        return [proc_close($process), $output];
+        return get_debug_type($handler);
     }
 }
