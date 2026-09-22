@@ -9,9 +9,7 @@ declare(strict_types=1);
 namespace Ibexa\Contracts\Test\Core;
 
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use Ibexa\Contracts\Test\Core\Bootstrapper\SymfonyErrorHandlerRestorer;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * @experimental
@@ -39,17 +37,5 @@ abstract class IbexaKernelTestCase extends KernelTestCase
         }
 
         return $this->ibexaCore;
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    protected static function bootKernel(array $options = []): KernelInterface
-    {
-        $kernel = parent::bootKernel($options);
-
-        (new SymfonyErrorHandlerRestorer())->restoreIfSymfonyHandlerIsOnTop();
-
-        return $kernel;
     }
 }
