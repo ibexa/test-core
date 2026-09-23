@@ -183,6 +183,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
             self::prepareIOServices($container);
             self::createPublicAliasesForServicesUnderTest($container);
             self::setUpTestLogger($container);
+            self::configureTwigComponent($container);
         });
     }
 
@@ -212,6 +213,22 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     protected function loadSecurity(LoaderInterface $loader): void
     {
         $loader->load(self::getResourcesPath() . '/config/security.yaml');
+    }
+
+    /**
+     * Projects get this configuration from the symfony/ux-twig-component Flex recipe; test kernels
+     * registering TwigComponentBundle need it too, or the bundle deprecates the missing options.
+     */
+    private static function configureTwigComponent(ContainerBuilder $container): void
+    {
+        if (!$container->hasExtension('twig_component')) {
+            return;
+        }
+
+        $container->loadFromExtension('twig_component', [
+            'anonymous_template_directory' => 'components/',
+            'defaults' => [],
+        ]);
     }
 
     /**
