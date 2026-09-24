@@ -21,7 +21,6 @@ return static function (ContainerConfigurator $container): void {
         'dbal' => [
             'url' => '%env(DATABASE_URL)%',
             'logging' => false,
-            'use_savepoints' => true,
         ],
         'orm' => array_filter([
             'controller_resolver' => ['auto_mapping' => false],
