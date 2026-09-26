@@ -11,6 +11,7 @@ namespace Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass;
 use Ibexa\Bundle\RepositoryInstaller\Event\Subscriber\BuildSchemaSubscriber;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexAfterFixturesHook;
@@ -34,6 +35,7 @@ final class RemoveUnsatisfiableHooksPass implements CompilerPassInterface
             // tables but none of core's
             BuildSchemaSubscriber::class,
         ],
+        BaseFixtureHook::class => [FixtureImporter::class],
         FixtureHook::class => [FixtureImporter::class],
         PurgeSearchIndexHook::class => ['ibexa.spi.search'],
         PurgeIndexAfterFixturesHook::class => ['ibexa.spi.search'],

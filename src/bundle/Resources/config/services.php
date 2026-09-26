@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
@@ -64,6 +65,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(DatabaseSchemaHook::class)
         ->tag(HookInterface::TAG, ['priority' => DatabaseSchemaHook::PRIORITY]);
+
+    $services->set(BaseFixtureHook::class)
+        ->tag(HookInterface::TAG, ['priority' => BaseFixtureHook::PRIORITY]);
 
     $services->set(FixtureHook::class)
         ->arg('$provider', service(FixtureProviderChain::class))
