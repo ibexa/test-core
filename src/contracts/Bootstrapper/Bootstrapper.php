@@ -30,12 +30,17 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * `$options` is a top-level array keyed by FQCN (or, for a hook contributed by a downstream bundle,
  * its own service id) — each key's own sub-array is resolved against that key's own OptionsResolver,
  * and any key that isn't recognized makes the whole array fail to resolve, e.g.:
- *  - self::class => [self::OPTION_SCHEMA_UPDATE => false]: Bootstrapper's own options —
+ *  - self::class => [self::OPTION_SCHEMA_UPDATE => true]: Bootstrapper's own options —
  *    whether to prepare a database at all, whether to run `doctrine:schema:update` against the
  *    ORM-mapped schema, and whether to shut the kernel down before returning it. Not read by any
  *    Hook. Pass [self::OPTION_PREPARE_DATABASE => false] for a package whose tests never touch the
  *    database at all — this skips `doctrine:database:drop`/`doctrine:database:create` too, not just
  *    schema/fixture import (which are separate, per-Hook options — see below).
+ *    OPTION_SCHEMA_UPDATE is off by default: ORM-mapped tables reach the schema the same way every
+ *    other table does (a SchemaBuilderEvent subscriber, e.g. ibexa/core's
+ *    OrmEntitiesSchemaSubscriber, or the package's own Doctrine migration), so running
+ *    `doctrine:schema:update` on top of that would try to create them a second time. Opt in only
+ *    for ORM-mapped tables nothing else creates.
  *  - HookClass::class => [...]: each hook's own options, resolved against whatever that hook
  *    declares in {@see HookInterface::configureOptions()}. For example:
  *      - DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => false]
@@ -116,7 +121,7 @@ final class Bootstrapper
                     ->default(true)
                     ->allowedTypes('bool');
                 $ownResolver->define(self::OPTION_SCHEMA_UPDATE)
-                    ->default(true)
+                    ->default(false)
                     ->allowedTypes('bool');
                 $ownResolver->define(self::OPTION_SHUTDOWN_KERNEL)
                     ->default(true)

@@ -99,25 +99,25 @@ final class BootstrapperTest extends TestCase
         self::assertSame($this->kernel, $this->bootstrapper->bootstrap());
     }
 
-    public function testPreparesTheDatabaseWithTheDefaultSchemaUpdateOption(): void
-    {
-        $this->databasePreparer
-            ->expects(self::once())
-            ->method('prepareDatabase')
-            ->with($this->kernel, true);
-
-        $this->bootstrapper->bootstrap();
-    }
-
-    public function testPreparesTheDatabaseWithSchemaUpdateDisabledWhenOptedOut(): void
+    public function testPreparesTheDatabaseWithoutSchemaUpdateByDefault(): void
     {
         $this->databasePreparer
             ->expects(self::once())
             ->method('prepareDatabase')
             ->with($this->kernel, false);
 
+        $this->bootstrapper->bootstrap();
+    }
+
+    public function testPreparesTheDatabaseWithSchemaUpdateWhenOptedIn(): void
+    {
+        $this->databasePreparer
+            ->expects(self::once())
+            ->method('prepareDatabase')
+            ->with($this->kernel, true);
+
         $this->bootstrapper->bootstrap(null, [
-            Bootstrapper::class => [Bootstrapper::OPTION_SCHEMA_UPDATE => false],
+            Bootstrapper::class => [Bootstrapper::OPTION_SCHEMA_UPDATE => true],
         ]);
     }
 
@@ -147,7 +147,7 @@ final class BootstrapperTest extends TestCase
             ->with([
                 Bootstrapper::class => [
                     Bootstrapper::OPTION_PREPARE_DATABASE => true,
-                    Bootstrapper::OPTION_SCHEMA_UPDATE => true,
+                    Bootstrapper::OPTION_SCHEMA_UPDATE => false,
                     Bootstrapper::OPTION_SHUTDOWN_KERNEL => true,
                 ],
                 'some.hook.id' => ['enabled' => false],
