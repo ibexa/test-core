@@ -19,10 +19,13 @@ use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
+use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
-use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapter;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapterInterface;
@@ -130,6 +133,12 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     }
 
     /**
+     * @deprecated 4.6.33 The "IbexaTestKernel::getSchemaFiles()" method is deprecated, will be
+     *   removed in 6.0. The test schema is built from the SchemaBuilderEvent by
+     *   {@see DatabaseSchemaHook} - whichever bundles a kernel registers is what the schema
+     *   contains - so a kernel no longer declares schema files and overriding this serves no
+     *   purpose. Retained because {@see IbexaTestKernelInterface} still mandates it.
+     *
      * @return iterable<string>
      */
     public function getSchemaFiles(): iterable
@@ -137,9 +146,19 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
         yield from (new DefaultSchemaFilesProvider($this))->getSchemaFiles();
     }
 
+    /**
+     * @deprecated 4.6.33 The "IbexaTestKernel::getFixtures()" method is deprecated, will be removed
+     *   in 6.0. Declare a kernel's fixtures with the `ibexa.test.fixture_files` parameter, or with
+     *   a service tagged {@see FixtureProviderInterface::TAG}, instead.
+     *
+     * Returns nothing: the baseline repository content this used to yield is imported
+     * unconditionally by {@see BaseFixtureHook}, so yielding it here as well would import it twice.
+     *
+     * @return iterable<Fixture>
+     */
     public function getFixtures(): iterable
     {
-        yield from (new DefaultFixtureProvider())->getFixtures();
+        return [];
     }
 
     public function getCacheDir(): string
