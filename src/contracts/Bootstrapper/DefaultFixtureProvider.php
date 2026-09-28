@@ -11,12 +11,13 @@ namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\YamlFixture;
 
 /**
- * The built-in base fixture {@see \Ibexa\Contracts\Test\Core\IbexaTestKernel} contributes by
- * default. Deliberately not tagged as a {@see FixtureProviderInterface} — the kernel-method fallback
- * ({@see FixtureKernelMethodProvider}) already always wins for every kernel, since
- * {@see \Ibexa\Contracts\Core\Test\IbexaTestKernelInterface} makes `getFixtures()` mandatory. This
- * class exists purely so another provider can constructor-inject it directly to compose with the
- * built-in default without going through a Kernel method.
+ * Defines the baseline repository content every kernel starts from.
+ *
+ * Deliberately not tagged as a {@see FixtureProviderInterface}: the baseline is not something the
+ * provider chain chooses between, it is imported unconditionally by {@see BaseFixtureHook}. The
+ * chain covers what a package contributes on top. A provider that needs the baseline's rows to
+ * build its own fixtures can still constructor-inject this class directly, but it should not yield
+ * them again - the hook has already imported them by the time {@see FixtureHook} runs.
  */
 final class DefaultFixtureProvider
 {
