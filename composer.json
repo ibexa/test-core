@@ -10,13 +10,13 @@
         "doctrine/dbal": "^4.4",
         "ibexa/jms-translation-bundle": "^3.0",
         "phpunit/phpunit": "^11.5",
-        "symfony/framework-bundle": "^7.4",
-        "symfony/mime": "^7.4",
-        "symfony/options-resolver": "^7.4",
-        "symfony/runtime": "^7.4",
-        "symfony/translation": "^7.4",
-        "symfony/validator": "^7.4",
-        "symfony/yaml": "^7.4"
+        "symfony/framework-bundle": "^7.4 || ^8.1",
+        "symfony/mime": "^7.4 || ^8.1",
+        "symfony/options-resolver": "^7.4 || ^8.1",
+        "symfony/runtime": "^7.4 || ^8.1",
+        "symfony/translation": "^7.4 || ^8.1",
+        "symfony/validator": "^7.4 || ^8.1",
+        "symfony/yaml": "^7.4 || ^8.1"
     },
     "require-dev": {
         "ibexa/code-style": "^2.0",
