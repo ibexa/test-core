@@ -15,14 +15,13 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook
- */
+#[CoversClass(BaseFixtureHook::class)]
 final class BaseFixtureHookTest extends TestCase
 {
     public function testLoadBaseFixtureOptionDefaultsToTrue(): void
@@ -70,7 +69,6 @@ final class BaseFixtureHookTest extends TestCase
     {
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::never())->method('insert');
-        $connection->expects(self::never())->method('executeUpdate');
         $connection->expects(self::never())->method('executeStatement');
 
         $hook = new BaseFixtureHook(new DefaultFixtureProvider(), new FixtureImporter($connection));
