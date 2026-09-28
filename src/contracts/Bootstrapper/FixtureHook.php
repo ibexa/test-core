@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
+use Ibexa\Contracts\Core\Test\Persistence\AppendOnlyFixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -16,9 +17,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *
  * The baseline repository content these are layered on top of is not part of the chain - it is
  * imported separately by {@see BaseFixtureHook}, which runs first. A fixture here that writes into
- * tables the baseline already populates must implement
- * {@see \Ibexa\Contracts\Core\Test\Persistence\AppendOnlyFixture}, or importing it will truncate
- * those tables and take the baseline's rows with it.
+ * tables the baseline already populates must implement {@see AppendOnlyFixture}, or importing it
+ * will truncate those tables and take the baseline's rows with it.
  *
  * Enabled by default; pass `[self::OPTION_LOAD_FIXTURES => false]` as this hook's own options (keyed
  * by its own service id in the bootstrap options array) to skip it.

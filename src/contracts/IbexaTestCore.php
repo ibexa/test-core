@@ -25,7 +25,10 @@ use Ibexa\Contracts\Core\Repository\UserService;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
+use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Core\Repository\Values\User\UserReference;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -56,9 +59,9 @@ final class IbexaTestCore implements IbexaTestCoreInterface
 
     /**
      * @deprecated 4.6.33 The "IbexaTestCore::loadSchema()" method is deprecated, will be removed in
-     *   6.0. Installing the schema from a test case rules out running tests inside a transaction; the
-     *   Bootstrapper's {@see \Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook} does it once
-     *   per run instead, which is what DAMADoctrineTestBundle needs.
+     *   6.0. Installing the schema from a test case rules out running tests inside a transaction;
+     *   the Bootstrapper's {@see DatabaseSchemaHook} does it once per run instead, which is what
+     *   DAMADoctrineTestBundle needs.
      */
     public function loadSchema(): void
     {
@@ -81,11 +84,10 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     }
 
     /**
-     * @deprecated 4.6.33 The "IbexaTestCore::loadFixtures()" method is deprecated, will be removed in
-     *   6.0. Importing fixtures from a test case rules out running tests inside a transaction; the
-     *   Bootstrapper's {@see \Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook} and
-     *   {@see \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook} do it once per run instead, which
-     *   is what DAMADoctrineTestBundle needs.
+     * @deprecated 4.6.33 The "IbexaTestCore::loadFixtures()" method is deprecated, will be removed
+     *   in 6.0. Importing fixtures from a test case rules out running tests inside a transaction;
+     *   the Bootstrapper's {@see BaseFixtureHook} and {@see FixtureHook} do it once per run
+     *   instead, which is what DAMADoctrineTestBundle needs.
      *
      * @throws Exception
      */
@@ -106,7 +108,7 @@ final class IbexaTestCore implements IbexaTestCoreInterface
      * @deprecated 4.6.33 The "IbexaTestCore::getFixtures()" method is deprecated, will be removed in
      *   6.0. It exists only to feed {@see self::loadFixtures()}.
      *
-     * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
+     * @return iterable<Fixture>
      */
     public function getFixtures(): iterable
     {
