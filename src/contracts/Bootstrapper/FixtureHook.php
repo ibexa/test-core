@@ -12,7 +12,13 @@ use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Imports the fixtures exposed by {@see FixtureProviderInterface}.
+ * Imports the fixtures a package contributes, as exposed by {@see FixtureProviderInterface}.
+ *
+ * The baseline repository content these are layered on top of is not part of the chain - it is
+ * imported separately by {@see BaseFixtureHook}, which runs first. A fixture here that writes into
+ * tables the baseline already populates must implement
+ * {@see \Ibexa\Contracts\Core\Test\Persistence\AppendOnlyFixture}, or importing it will truncate
+ * those tables and take the baseline's rows with it.
  *
  * Enabled by default; pass `[self::OPTION_LOAD_FIXTURES => false]` as this hook's own options (keyed
  * by its own service id in the bootstrap options array) to skip it.
@@ -20,7 +26,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 final class FixtureHook implements HookInterface
 {
     /**
-     * Fixed tag priority this hook is registered at — runs after {@see DatabaseSchemaHook} (1000),
+     * Fixed tag priority this hook is registered at — runs after {@see BaseFixtureHook} (950),
      * before ibexa/migrations' MigrationHook (500), if present.
      */
     public const PRIORITY = 900;
