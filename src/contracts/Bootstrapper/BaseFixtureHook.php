@@ -41,7 +41,10 @@ final class BaseFixtureHook implements HookInterface
     public const PRIORITY = 950;
 
     /**
-     * Enabled by default - the baseline is what every kernel starts from.
+     * Enabled by default - the baseline is what every kernel starts from. Under {@see Bootstrapper},
+     * when not passed explicitly, it follows {@see FixtureHook::OPTION_LOAD_FIXTURES} instead, so a
+     * package that switches its fixtures off - typically one whose tests never touch the database -
+     * doesn't get the baseline either, as before this hook existed.
      *
      * Pass `[self::OPTION_LOAD_BASE_FIXTURE => false]` as this hook's own options (keyed by its own
      * service id in the bootstrap options array) on the Doctrine Migrations install path, where
