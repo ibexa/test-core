@@ -11,6 +11,7 @@ namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 use Doctrine\DBAL\Connection;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Contracts\DoctrineSchema\DbPlatformFactoryInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabasePreparerInterface;
@@ -23,6 +24,7 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -169,15 +171,14 @@ final class BootstrapperTest extends TestCase
     }
 
     /**
-     * @dataProvider provideOptionsForBaseFixtureSwitch
-     *
      * @param array<string, mixed> $options
      */
+    #[DataProvider('provideOptionsForBaseFixtureSwitch')]
     public function testBaseFixtureSwitchFollowsFixtureHookUnlessPassedExplicitly(
         array $options,
         bool $expectedLoadBaseFixture
     ): void {
-        $hooksExecutor = $this->createHooksExecutor(self::createStub(Connection::class));
+        $hooksExecutor = $this->createHooksExecutor($this->createStub(Connection::class));
         $this->hooksExecutor
             ->expects(self::once())
             ->method('configureOptions')
@@ -293,12 +294,13 @@ final class BootstrapperTest extends TestCase
 
         return new HooksExecutor([
             DatabaseSchemaHook::class => new DatabaseSchemaHook(
-                self::createStub(SchemaBuilderInterface::class),
-                $connection
+                $this->createStub(SchemaBuilderInterface::class),
+                $connection,
+                $this->createStub(DbPlatformFactoryInterface::class)
             ),
             BaseFixtureHook::class => new BaseFixtureHook(new DefaultFixtureProvider(), $fixtureImporter),
             FixtureHook::class => new FixtureHook(
-                self::createStub(FixtureProviderInterface::class),
+                $this->createStub(FixtureProviderInterface::class),
                 $fixtureImporter
             ),
         ]);
