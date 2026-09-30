@@ -166,7 +166,10 @@ final class Bootstrapper
 
         $resolver->addNormalizer(
             BaseFixtureHook::class,
-            static function (Options $options, array $value): array {
+            static function (
+                Options $options,
+                array $value
+            ): array {
                 if (!array_key_exists(BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE, $value)) {
                     $value[BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE] = $options[FixtureHook::class][FixtureHook::OPTION_LOAD_FIXTURES];
                 }

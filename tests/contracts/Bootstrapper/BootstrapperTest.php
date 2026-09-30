@@ -177,7 +177,7 @@ final class BootstrapperTest extends TestCase
         array $options,
         bool $expectedLoadBaseFixture
     ): void {
-        $hooksExecutor = $this->createHooksExecutor($this->createStub(Connection::class));
+        $hooksExecutor = $this->createHooksExecutor(self::createStub(Connection::class));
         $this->hooksExecutor
             ->expects(self::once())
             ->method('configureOptions')
@@ -294,12 +294,12 @@ final class BootstrapperTest extends TestCase
 
         return new HooksExecutor([
             DatabaseSchemaHook::class => new DatabaseSchemaHook(
-                $this->createStub(SchemaBuilderInterface::class),
+                self::createStub(SchemaBuilderInterface::class),
                 $connection
             ),
             BaseFixtureHook::class => new BaseFixtureHook(new DefaultFixtureProvider(), $fixtureImporter),
             FixtureHook::class => new FixtureHook(
-                $this->createStub(FixtureProviderInterface::class),
+                self::createStub(FixtureProviderInterface::class),
                 $fixtureImporter
             ),
         ]);
