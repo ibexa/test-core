@@ -46,6 +46,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *      - DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => false]
  *      - FixtureHook::class => [FixtureHook::OPTION_LOAD_FIXTURES => false]
  *      - PurgeSearchIndexHook::class => [PurgeSearchIndexHook::OPTION_PURGE_INDEX => true]
+ *    One hook default depends on another hook's options: {@see BaseFixtureHook}'s
+ *    OPTION_LOAD_BASE_FIXTURE, unless passed explicitly, follows FixtureHook::OPTION_LOAD_FIXTURES,
+ *    so switching the fixtures off switches the baseline off too.
  *
  * Other hooks (including ones contributed by a downstream bundle, e.g. ibexa/migrations' own
  * MigrationHook) may define and read their own FQCN-keyed options sub-array the same way; this
@@ -130,8 +133,43 @@ final class Bootstrapper
                 return $ownResolver->resolve($value);
             });
         $hooksExecutor->configureOptions($resolver);
+        self::defaultBaseFixtureToFixtureHook($resolver);
 
         return $resolver->resolve($options);
+    }
+
+    /**
+     * Makes BaseFixtureHook's own switch, when it isn't passed explicitly, follow FixtureHook's.
+     *
+     * Before the baseline got a hook of its own it was imported by FixtureHook, so
+     * `FixtureHook::OPTION_LOAD_FIXTURES => false` skipped it too. Packages whose tests never touch
+     * the database still rely on that: they switch off database preparation, the schema and the
+     * fixtures, and there is no schema for the baseline to be imported into. An explicit
+     * `BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE` wins either way — the Doctrine Migrations install
+     * path turns the baseline off while keeping FixtureHook on.
+     *
+     * Done here because a hook is only ever handed its own sub-array; this resolver is the one place
+     * that sees both. Prepended, so it fills in the raw sub-array before the normalizer
+     * {@see HooksExecutorInterface::configureOptions()} defined resolves it against the hook's own
+     * defaults.
+     */
+    private static function defaultBaseFixtureToFixtureHook(OptionsResolver $resolver): void
+    {
+        if (!$resolver->isDefined(BaseFixtureHook::class) || !$resolver->isDefined(FixtureHook::class)) {
+            return;
+        }
+
+        $resolver->addNormalizer(
+            BaseFixtureHook::class,
+            static function (Options $options, array $value): array {
+                if (!array_key_exists(BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE, $value)) {
+                    $value[BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE] = $options[FixtureHook::class][FixtureHook::OPTION_LOAD_FIXTURES];
+                }
+
+                return $value;
+            },
+            true
+        );
     }
 
     /**

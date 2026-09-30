@@ -21,7 +21,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * those tables and take the baseline's rows with it.
  *
  * Enabled by default; pass `[self::OPTION_LOAD_FIXTURES => false]` as this hook's own options (keyed
- * by its own service id in the bootstrap options array) to skip it.
+ * by its own service id in the bootstrap options array) to skip it. Under {@see Bootstrapper} that
+ * skips the baseline too, unless {@see BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE} is passed
+ * explicitly.
  */
 final class FixtureHook implements HookInterface
 {
