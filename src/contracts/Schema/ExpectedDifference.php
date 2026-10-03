@@ -65,7 +65,10 @@ final class ExpectedDifference
     public function onPlatforms(string ...$platforms): self
     {
         $copy = clone $this;
-        $copy->platforms = array_values($platforms);
+        $copy->platforms = [];
+        foreach ($platforms as $value) {
+            $copy->platforms[] = $value;
+        }
 
         return $copy;
     }
@@ -76,7 +79,10 @@ final class ExpectedDifference
     public function inScenarios(string ...$scenarios): self
     {
         $copy = clone $this;
-        $copy->scenarios = array_values($scenarios);
+        $copy->scenarios = [];
+        foreach ($scenarios as $value) {
+            $copy->scenarios[] = $value;
+        }
 
         return $copy;
     }
