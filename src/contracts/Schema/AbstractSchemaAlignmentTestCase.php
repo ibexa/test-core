@@ -34,6 +34,8 @@ use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
  * }
  * ```
  *
+ * Override {@see getDatabaseConnection()} if the suite reaches its database another way.
+ *
  * @experimental
  */
 abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
@@ -42,10 +44,8 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
     final public function testDatabaseMatchesTheSchemaBuilderEventSchema(): void
     {
-        $container = self::getContainer();
-        $connection = $container->get('doctrine.dbal.default_connection');
-        $schemaBuilder = $container->get(SchemaBuilderInterface::class);
-        self::assertInstanceOf(Connection::class, $connection);
+        $connection = $this->getDatabaseConnection();
+        $schemaBuilder = self::getContainer()->get(SchemaBuilderInterface::class);
         self::assertInstanceOf(SchemaBuilderInterface::class, $schemaBuilder);
 
         $statements = self::compareSchemas(
@@ -59,6 +59,15 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
             . "installed it, a migration is missing or incomplete. These statements would make it match:\n%s",
             implode(";\n", $statements)
         ));
+    }
+
+    /**
+     * The connection to the database the suite installs the schema in. Override it when that isn't
+     * the kernel's default Doctrine connection.
+     */
+    protected function getDatabaseConnection(): Connection
+    {
+        return $this->getIbexaTestCore()->getDoctrineConnection();
     }
 
     /**
