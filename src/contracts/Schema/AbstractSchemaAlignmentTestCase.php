@@ -12,8 +12,12 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
+use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Comparator;
+use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\Sequence;
+use Doctrine\DBAL\Schema\Table;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 
@@ -94,43 +98,73 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
     private static function normalize(Schema $schema, AbstractPlatform $platform): void
     {
-        // PostgreSQL's SERIAL sequences on tables with a composite primary key aren't recognized as
-        // implicit. The autoincrement flag of the columns still covers them.
         foreach ($schema->getSequences() as $sequence) {
-            $schema->dropSequence($sequence->getName());
+            self::ignoreSerialColumnSequence($schema, $sequence);
         }
 
         foreach ($schema->getTables() as $table) {
             foreach ($table->getIndexes() as $index) {
-                if ($index->isPrimary() || !$index->hasOption('lengths')) {
-                    continue;
-                }
-
-                // Only MySQL and MariaDB store index prefix lengths. schema.yaml gives them as strings,
-                // the database as integers.
-                $lengths = $platform instanceof MySqlPlatform
-                    ? array_map(
-                        static fn ($length): ?int => $length === null ? null : (int)$length,
-                        (array)$index->getOption('lengths')
-                    )
-                    : [];
-                $options = ['lengths' => $lengths] + $index->getOptions();
-
-                $table->dropIndex($index->getName());
-                if ($index->isUnique()) {
-                    $table->addUniqueIndex($index->getColumns(), $index->getName(), $options);
-                } else {
-                    $table->addIndex($index->getColumns(), $index->getName(), $index->getFlags(), $options);
-                }
+                self::normalizeIndexPrefixLengths($table, $index, $platform);
             }
 
-            // SQLite can't express autoincrement on a composite primary key, and reports every
-            // INTEGER PRIMARY KEY column as autoincrement.
-            if ($platform instanceof SqlitePlatform) {
-                foreach ($table->getColumns() as $column) {
-                    $column->setAutoincrement(false);
-                }
+            foreach ($table->getColumns() as $column) {
+                self::ignoreAutoincrementOnSqlite($column, $platform);
             }
+        }
+    }
+
+    /**
+     * PostgreSQL creates a sequence for each SERIAL column, and DBAL doesn't recognize it as implicit
+     * on a table with a composite primary key. The column's autoincrement flag still says the same.
+     */
+    private static function ignoreSerialColumnSequence(Schema $schema, Sequence $sequence): void
+    {
+        $schema->dropSequence($sequence->getName());
+    }
+
+    /**
+     * Only MySQL and MariaDB store index prefix lengths, so other platforms read them back as null.
+     * On those two, schema.yaml gives them as strings, and the database as integers.
+     */
+    private static function normalizeIndexPrefixLengths(Table $table, Index $index, AbstractPlatform $platform): void
+    {
+        if ($index->isPrimary() || !$index->hasOption('lengths')) {
+            return;
+        }
+
+        $lengths = $platform instanceof MySqlPlatform
+            ? array_map(
+                static fn ($length): ?int => $length === null ? null : (int)$length,
+                (array)$index->getOption('lengths')
+            )
+            : [];
+
+        self::replaceIndexOptions($table, $index, ['lengths' => $lengths] + $index->getOptions());
+    }
+
+    /**
+     * SQLite can't express autoincrement on a composite primary key, and reports every INTEGER
+     * PRIMARY KEY column as autoincrement.
+     */
+    private static function ignoreAutoincrementOnSqlite(Column $column, AbstractPlatform $platform): void
+    {
+        if ($platform instanceof SqlitePlatform) {
+            $column->setAutoincrement(false);
+        }
+    }
+
+    /**
+     * An index's options can't be changed, so it's replaced by an index with the new ones.
+     *
+     * @param array<string, mixed> $options
+     */
+    private static function replaceIndexOptions(Table $table, Index $index, array $options): void
+    {
+        $table->dropIndex($index->getName());
+        if ($index->isUnique()) {
+            $table->addUniqueIndex($index->getColumns(), $index->getName(), $options);
+        } else {
+            $table->addIndex($index->getColumns(), $index->getName(), $index->getFlags(), $options);
         }
     }
 }
