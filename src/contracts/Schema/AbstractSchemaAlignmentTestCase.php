@@ -160,9 +160,11 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      */
     private static function ignoreAutoincrementOnSqlite(Column $column, AbstractPlatform $platform): void
     {
-        if ($platform instanceof SqlitePlatform) {
-            $column->setAutoincrement(false);
+        if (!$platform instanceof SqlitePlatform) {
+            return;
         }
+
+        $column->setAutoincrement(false);
     }
 
     /**
@@ -172,10 +174,16 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     private static function treatOverlongStringAsText(Column $column, AbstractPlatform $platform): void
     {
         $length = $column->getLength();
-        if ($column->getType() instanceof StringType && $length !== null && $length > $platform->getVarcharMaxLength()) {
-            $column->setType(Type::getType(Types::TEXT));
-            $column->setLength(null);
+        if (
+            !$column->getType() instanceof StringType
+            || $length === null
+            || $length <= $platform->getVarcharMaxLength()
+        ) {
+            return;
         }
+
+        $column->setType(Type::getType(Types::TEXT));
+        $column->setLength(null);
     }
 
     /**
