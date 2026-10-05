@@ -18,6 +18,9 @@ use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Types\StringType;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 
@@ -109,6 +112,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
             foreach ($table->getColumns() as $column) {
                 self::ignoreAutoincrementOnSqlite($column, $platform);
+                self::treatOverlongStringAsText($column, $platform);
             }
         }
     }
@@ -150,6 +154,19 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     {
         if ($platform instanceof SqlitePlatform) {
             $column->setAutoincrement(false);
+        }
+    }
+
+    /**
+     * A string column longer than the platform's VARCHAR limit is created as a text one (a CLOB on
+     * SQLite, where the limit is 4000), and read back as such.
+     */
+    private static function treatOverlongStringAsText(Column $column, AbstractPlatform $platform): void
+    {
+        $length = $column->getLength();
+        if ($column->getType() instanceof StringType && $length !== null && $length > $platform->getVarcharMaxLength()) {
+            $column->setType(Type::getType(Types::TEXT));
+            $column->setLength(null);
         }
     }
 

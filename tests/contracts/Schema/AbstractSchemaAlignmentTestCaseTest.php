@@ -52,6 +52,24 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         );
     }
 
+    public function testComparesAStringLongerThanThePlatformAllowsAsText(): void
+    {
+        self::assertSame([], AbstractSchemaAlignmentTestCase::compareSchemas(
+            self::createDescriptionSchema('text', null),
+            self::createDescriptionSchema('string', 10000),
+            new SqlitePlatform()
+        ));
+    }
+
+    public function testStillComparesAStringWithinThePlatformLimit(): void
+    {
+        self::assertNotSame([], AbstractSchemaAlignmentTestCase::compareSchemas(
+            self::createDescriptionSchema('text', null),
+            self::createDescriptionSchema('string', 1000),
+            new SqlitePlatform()
+        ));
+    }
+
     /**
      * Each database schema is the declared one as that platform reads it back, plus the Doctrine
      * Migrations versioning table.
@@ -93,6 +111,17 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         $plain->addColumn('id', 'integer', ['autoincrement' => $integerKeyAutoincrement]);
         $plain->addColumn('code', 'string', ['length' => 32]);
         $plain->setPrimaryKey(['id']);
+
+        return $schema;
+    }
+
+    private static function createDescriptionSchema(string $type, ?int $length): Schema
+    {
+        $schema = new Schema();
+        $table = $schema->createTable('translated_table');
+        $table->addColumn('id', 'integer');
+        $table->addColumn('description', $type, ['length' => $length]);
+        $table->setPrimaryKey(['id']);
 
         return $schema;
     }
