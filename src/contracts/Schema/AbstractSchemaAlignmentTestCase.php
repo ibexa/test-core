@@ -144,14 +144,14 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
             return;
         }
 
-        $lengths = $platform instanceof MySqlPlatform
-            ? array_map(
-                static fn ($length): ?int => $length === null ? null : (int)$length,
-                (array)$index->getOption('lengths')
-            )
+        $lengths = $index->getOption('lengths');
+        assert(is_array($lengths));
+
+        $normalizedLengths = $platform instanceof MySqlPlatform
+            ? array_map(static fn ($length): ?int => $length === null ? null : (int)$length, $lengths)
             : [];
 
-        self::replaceIndexOptions($table, $index, ['lengths' => $lengths] + $index->getOptions());
+        self::replaceIndexOptions($table, $index, ['lengths' => $normalizedLengths] + $index->getOptions());
     }
 
     /**
