@@ -41,7 +41,8 @@ use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
  * }
  * ```
  *
- * Override {@see getDatabaseConnection()} if the suite reaches its database another way.
+ * Override {@see getDatabaseConnection()} or {@see getSchemaBuilder()} if the suite reaches its
+ * database, or builds the schema it declares, another way.
  *
  * @experimental
  */
@@ -52,11 +53,10 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     final public function testDatabaseMatchesTheSchemaBuilderEventSchema(): void
     {
         $connection = $this->getDatabaseConnection();
-        $schemaBuilder = $this->getIbexaTestCore()->getServiceByClassName(SchemaBuilderInterface::class);
 
         $statements = self::compareSchemas(
             $connection->getSchemaManager()->createSchema(),
-            $schemaBuilder->buildSchema(),
+            $this->getSchemaBuilder()->buildSchema(),
             $connection->getDatabasePlatform()
         );
 
@@ -74,6 +74,15 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     protected function getDatabaseConnection(): Connection
     {
         return $this->getIbexaTestCore()->getDoctrineConnection();
+    }
+
+    /**
+     * The schema builder whose schema the database is compared with. Override it when that isn't
+     * the one the kernel exposes.
+     */
+    protected function getSchemaBuilder(): SchemaBuilderInterface
+    {
+        return $this->getIbexaTestCore()->getServiceByClassName(SchemaBuilderInterface::class);
     }
 
     /**
