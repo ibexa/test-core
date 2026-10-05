@@ -52,8 +52,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     final public function testDatabaseMatchesTheSchemaBuilderEventSchema(): void
     {
         $connection = $this->getDatabaseConnection();
-        $schemaBuilder = self::getContainer()->get(SchemaBuilderInterface::class);
-        self::assertInstanceOf(SchemaBuilderInterface::class, $schemaBuilder);
+        $schemaBuilder = $this->getIbexaTestCore()->getServiceByClassName(SchemaBuilderInterface::class);
 
         $statements = self::compareSchemas(
             $connection->getSchemaManager()->createSchema(),
