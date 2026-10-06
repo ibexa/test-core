@@ -8,14 +8,14 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Integration\Test\Core\Schema;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
+use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
-use Ibexa\Contracts\Test\Core\Schema\AbstractSchemaAlignmentTestCase;
+use Ibexa\Tests\Contracts\Test\Core\Schema\Stub\SchemaAlignmentTestCaseStub;
 
 /**
  * Creates each case AbstractSchemaAlignmentTestCase normalizes in the database the suite runs on, and
@@ -39,15 +39,26 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
     }
 
     /**
+     * The test case passes with the table in the database, and next to the kernel's tables in the
+     * declared schema.
+     *
      * @dataProvider provideCases
      *
      * @param string[] $platformsReadingItBackDifferently
      */
     public function testComparesItAsDeclared(Table $table, array $platformsReadingItBackDifferently): void
     {
-        [$database, $declared, $platform] = $this->createAndReadBack($table);
+        $this->createTable($table);
 
-        self::assertSame([], AbstractSchemaAlignmentTestCase::compareSchemas($database, $declared, $platform));
+        $kernelSchemaBuilder = $this->getIbexaTestCore()->getServiceByClassName(SchemaBuilderInterface::class);
+        $tables = $kernelSchemaBuilder->buildSchema()->getTables();
+        $tables[] = $table;
+        $schemaBuilder = $this->createStub(SchemaBuilderInterface::class);
+        $schemaBuilder->method('buildSchema')->willReturn(new Schema($tables));
+
+        $testCase = new SchemaAlignmentTestCaseStub($this->getIbexaTestCore()->getDoctrineConnection(), $schemaBuilder);
+
+        self::assertSame([], $testCase->getReportedStatements());
     }
 
     /**
@@ -62,9 +73,20 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
         Table $table,
         array $platformsReadingItBackDifferently
     ): void {
-        [$database, $declared, $platform] = $this->createAndReadBack($table);
+        $this->createTable($table);
 
-        $statements = (new Comparator())->compare($database, $declared)->toSql($platform);
+        $connection = $this->getIbexaTestCore()->getDoctrineConnection();
+        $platform = $connection->getDatabasePlatform();
+        $schemaManager = $connection->getSchemaManager();
+        $sequences = $platform->supportsSequences()
+            ? array_filter(
+                $schemaManager->listSequences(),
+                static fn (Sequence $sequence): bool => str_starts_with($sequence->getName(), $table->getName() . '_')
+            )
+            : [];
+        $database = new Schema([$schemaManager->listTableDetails($table->getName())], $sequences);
+
+        $statements = (new Comparator())->compare($database, new Schema([$table]))->toSql($platform);
 
         self::assertSame(
             in_array($platform->getName(), $platformsReadingItBackDifferently, true),
@@ -104,30 +126,15 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
         yield 'string longer than VARCHAR allows' => [$table, ['sqlite']];
     }
 
-    /**
-     * @return array{Schema, Schema, AbstractPlatform}
-     */
-    private function createAndReadBack(Table $table): array
+    private function createTable(Table $table): void
     {
         $connection = $this->getIbexaTestCore()->getDoctrineConnection();
-        $platform = $connection->getDatabasePlatform();
-        $declared = new Schema([$table]);
 
         // Created from a clone: doctrine-schema's SqliteDbPlatform drops the autoincrement from a
         // composite key in the table it's given, which would hide the difference.
-        foreach ((clone $declared)->toSql($platform) as $statement) {
+        foreach ((clone new Schema([$table]))->toSql($connection->getDatabasePlatform()) as $statement) {
             $connection->executeStatement($statement);
         }
         $this->createdTable = $table->getName();
-
-        $schemaManager = $connection->getSchemaManager();
-        $sequences = $platform->supportsSequences()
-            ? array_filter(
-                $schemaManager->listSequences(),
-                static fn (Sequence $sequence): bool => str_starts_with($sequence->getName(), $table->getName() . '_')
-            )
-            : [];
-
-        return [new Schema([$schemaManager->listTableDetails($table->getName())], $sequences), $declared, $platform];
     }
 }

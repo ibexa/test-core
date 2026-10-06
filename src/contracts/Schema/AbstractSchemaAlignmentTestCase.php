@@ -88,11 +88,9 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      * Returns the statements that would turn the database schema into the declared one, leaving out
      * what DBAL can't read back from a database the way it was declared.
      *
-     * @internal public for this package's own tests
-     *
      * @return string[]
      */
-    final public static function compareSchemas(Schema $database, Schema $declared, AbstractPlatform $platform): array
+    private static function compareSchemas(Schema $database, Schema $declared, AbstractPlatform $platform): array
     {
         $database = clone $database;
         $declared = clone $declared;
