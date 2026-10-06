@@ -6,7 +6,7 @@
         "ibexa-dxp"
     ],
     "require": {
-        "php": ">=8.3",
+        "php": ">=8.5",
         "doctrine/dbal": "^4.4",
         "ibexa/jms-translation-bundle": "^3.0",
         "phpunit/phpunit": "^11.5",
