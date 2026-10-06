@@ -15,7 +15,9 @@ use Doctrine\DBAL\Platforms\MySQL80Platform;
 use Doctrine\DBAL\Platforms\PostgreSQL100Platform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
+use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
@@ -55,7 +57,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     public function testComparesPrefixLengthsWhereTheDatabaseStoresThem(): void
     {
         $database = self::createDatabaseSchema(static function (Schema $schema): void {
-            self::setNameLengths($schema, [100]);
+            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [100]);
         });
 
         self::assertSame(
@@ -70,7 +72,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     public function testStillComparesAStringWithinThePlatformLimit(): void
     {
         $database = self::createDatabaseSchema(static function (Schema $schema): void {
-            self::readBackAsText($schema, 'title');
+            self::readBackAsText($schema->getTable('alignment_long_string')->getColumn('title'));
         });
 
         self::assertContains(
@@ -88,22 +90,22 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     public static function provideDatabasesReadBackDifferently(): iterable
     {
         $mySql = static function (Schema $schema): void {
-            self::setNameLengths($schema, [191]);
+            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [191]);
         };
         yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mySql)];
         yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mySql)];
 
         $postgreSql = static function (Schema $schema): void {
-            self::setNameLengths($schema, [null]);
+            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [null]);
             $schema->createSequence('alignment_composite_key_id_seq');
         };
         yield 'PostgreSQL' => [new PostgreSQL100Platform(), self::createDatabaseSchema($postgreSql)];
 
         $sqlite = static function (Schema $schema): void {
-            self::setNameLengths($schema, [null]);
+            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [null]);
             $schema->getTable('alignment_composite_key')->getColumn('id')->setAutoincrement(false);
             $schema->getTable('alignment_integer_key')->getColumn('id')->setAutoincrement(true);
-            self::readBackAsText($schema, 'description');
+            self::readBackAsText($schema->getTable('alignment_long_string')->getColumn('description'));
         };
         yield 'SQLite' => [new SqlitePlatform(), self::createDatabaseSchema($sqlite)];
     }
@@ -157,17 +159,20 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     /**
      * @param array<int|null> $lengths
      */
-    private static function setNameLengths(Schema $schema, array $lengths): void
+    private static function setIndexLengths(Table $table, string $indexName, array $lengths): void
     {
-        $table = $schema->getTable('alignment_prefix_length');
-        $table->dropIndex('alignment_prefix_length_name');
-        $table->addIndex(['name'], 'alignment_prefix_length_name', [], ['lengths' => $lengths]);
+        $index = $table->getIndex($indexName);
+        $table->dropIndex($indexName);
+        $table->addIndex(
+            $index->getColumns(),
+            $indexName,
+            $index->getFlags(),
+            ['lengths' => $lengths] + $index->getOptions()
+        );
     }
 
-    private static function readBackAsText(Schema $schema, string $columnName): void
+    private static function readBackAsText(Column $column): void
     {
-        $schema->getTable('alignment_long_string')->getColumn($columnName)
-            ->setType(Type::getType(Types::TEXT))
-            ->setLength(null);
+        $column->setType(Type::getType(Types::TEXT))->setLength(null);
     }
 }
