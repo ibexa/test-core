@@ -1,0 +1,22 @@
+# Each case AbstractSchemaAlignmentTestCase normalizes, declared the way packages' schema.yaml do.
+tables:
+    alignment_composite_key:
+        id:
+            id: { type: integer, nullable: false, options: { autoincrement: true } }
+            version: { type: integer, nullable: false }
+    alignment_integer_key:
+        id:
+            id: { type: integer, nullable: false }
+    alignment_prefix_length:
+        indexes:
+            alignment_prefix_length_name: { fields: [name], options: { lengths: ['191'] } }
+        id:
+            id: { type: integer, nullable: false, options: { autoincrement: true } }
+        fields:
+            name: { type: string, nullable: false, length: 255 }
+    alignment_long_string:
+        id:
+            id: { type: integer, nullable: false, options: { autoincrement: true } }
+        fields:
+            description: { type: string, nullable: false, length: 5000 }
+            title: { type: string, nullable: false, length: 255 }

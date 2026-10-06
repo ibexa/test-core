@@ -12,7 +12,8 @@ use Ibexa\Contracts\Test\Core\Schema\AbstractSchemaAlignmentTestCase;
 
 /**
  * The suite's bootstrap installs the schema SchemaBuilderEvent declares, so this passes by
- * construction, like it does on any package's legacy install path.
+ * construction, like it does on any package's legacy install path. Next to core's tables, the
+ * schema has those _fixtures/schema.yaml declares for each case the comparison normalizes.
  *
  * @group integration
  *
