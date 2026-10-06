@@ -8,13 +8,16 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Contracts\Test\Core\Schema;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MariaDb1027Platform;
 use Doctrine\DBAL\Platforms\MySQL80Platform;
 use Doctrine\DBAL\Platforms\PostgreSQL100Platform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
+use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
-use Ibexa\Contracts\Test\Core\Schema\AbstractSchemaAlignmentTestCase;
+use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Tests\Contracts\Test\Core\Schema\Stub\SchemaAlignmentTestCaseStub;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,7 +30,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      */
     public function testIgnoresWhatTheDatabaseReadsBackDifferently(AbstractPlatform $platform, Schema $database): void
     {
-        self::assertSame([], AbstractSchemaAlignmentTestCase::compareSchemas($database, self::createSchema(), $platform));
+        self::assertSame([], $this->getReportedStatements($database, self::createSchema(), $platform));
     }
 
     /**
@@ -40,7 +43,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
 
         self::assertContains(
             'CREATE INDEX plain_table_code ON plain_table (code)',
-            AbstractSchemaAlignmentTestCase::compareSchemas($database, $declared, $platform)
+            $this->getReportedStatements($database, $declared, $platform)
         );
     }
 
@@ -51,17 +54,13 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
                 'DROP INDEX versioned_table_name ON versioned_table',
                 'CREATE INDEX versioned_table_name ON versioned_table (name(191))',
             ],
-            AbstractSchemaAlignmentTestCase::compareSchemas(
-                self::createSchema([100]),
-                self::createSchema(),
-                new MySQL80Platform()
-            )
+            $this->getReportedStatements(self::createSchema([100]), self::createSchema(), new MySQL80Platform())
         );
     }
 
     public function testComparesAStringLongerThanThePlatformAllowsAsText(): void
     {
-        self::assertSame([], AbstractSchemaAlignmentTestCase::compareSchemas(
+        self::assertSame([], $this->getReportedStatements(
             self::createDescriptionSchema('text', null),
             self::createDescriptionSchema('string', 10000),
             new SqlitePlatform()
@@ -72,7 +71,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     {
         self::assertContains(
             'CREATE TABLE translated_table (id INTEGER NOT NULL, description VARCHAR(1000) NOT NULL, PRIMARY KEY(id))',
-            AbstractSchemaAlignmentTestCase::compareSchemas(
+            $this->getReportedStatements(
                 self::createDescriptionSchema('text', null),
                 self::createDescriptionSchema('string', 1000),
                 new SqlitePlatform()
@@ -96,6 +95,26 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         yield 'PostgreSQL' => [new PostgreSQL100Platform(), $postgreSql];
 
         yield 'SQLite' => [new SqlitePlatform(), self::withMigrationsTable(self::createSchema([null], false, true))];
+    }
+
+    /**
+     * Runs the test case on a database with the given schema.
+     *
+     * @return string[]
+     */
+    private function getReportedStatements(Schema $database, Schema $declared, AbstractPlatform $platform): array
+    {
+        $schemaManager = $this->createStub(AbstractSchemaManager::class);
+        $schemaManager->method('createSchema')->willReturn($database);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('getSchemaManager')->willReturn($schemaManager);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+
+        $schemaBuilder = $this->createStub(SchemaBuilderInterface::class);
+        $schemaBuilder->method('buildSchema')->willReturn($declared);
+
+        return (new SchemaAlignmentTestCaseStub($connection, $schemaBuilder))->getReportedStatements();
     }
 
     /**
