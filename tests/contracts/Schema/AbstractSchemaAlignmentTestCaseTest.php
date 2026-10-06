@@ -46,9 +46,16 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
 
     public function testComparesPrefixLengthsWhereTheDatabaseStoresThem(): void
     {
-        self::assertNotSame(
-            [],
-            AbstractSchemaAlignmentTestCase::compareSchemas(self::createSchema([100]), self::createSchema(), new MySQL80Platform())
+        self::assertSame(
+            [
+                'DROP INDEX versioned_table_name ON versioned_table',
+                'CREATE INDEX versioned_table_name ON versioned_table (name(191))',
+            ],
+            AbstractSchemaAlignmentTestCase::compareSchemas(
+                self::createSchema([100]),
+                self::createSchema(),
+                new MySQL80Platform()
+            )
         );
     }
 
@@ -63,11 +70,14 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
 
     public function testStillComparesAStringWithinThePlatformLimit(): void
     {
-        self::assertNotSame([], AbstractSchemaAlignmentTestCase::compareSchemas(
-            self::createDescriptionSchema('text', null),
-            self::createDescriptionSchema('string', 1000),
-            new SqlitePlatform()
-        ));
+        self::assertContains(
+            'CREATE TABLE translated_table (id INTEGER NOT NULL, description VARCHAR(1000) NOT NULL, PRIMARY KEY(id))',
+            AbstractSchemaAlignmentTestCase::compareSchemas(
+                self::createDescriptionSchema('text', null),
+                self::createDescriptionSchema('string', 1000),
+                new SqlitePlatform()
+            )
+        );
     }
 
     /**
