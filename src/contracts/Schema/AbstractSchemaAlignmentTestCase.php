@@ -16,7 +16,6 @@ use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\StringType;
 use Doctrine\DBAL\Types\Type;
@@ -109,9 +108,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
     private static function normalize(Schema $schema, AbstractPlatform $platform): void
     {
-        foreach ($schema->getSequences() as $sequence) {
-            self::ignoreSerialColumnSequence($schema, $sequence);
-        }
+        self::ignoreSequences($schema);
 
         foreach ($schema->getTables() as $table) {
             foreach ($table->getIndexes() as $index) {
@@ -126,12 +123,17 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     }
 
     /**
-     * PostgreSQL creates a sequence for each SERIAL column, and DBAL doesn't recognize it as implicit
-     * on a table with a composite primary key. The column's autoincrement flag still says the same.
+     * Schemas don't declare sequences, as MySQL and MariaDB have none. The only ones a database has
+     * are the sequences PostgreSQL creates for SERIAL columns, and DBAL ties those to their column
+     * only on a single-column primary key, so ezcontentclass_id_seq would be reported. Matching them
+     * by name isn't reliable either: PostgreSQL truncates the name to 63 characters. The columns'
+     * autoincrement flag is still compared.
      */
-    private static function ignoreSerialColumnSequence(Schema $schema, Sequence $sequence): void
+    private static function ignoreSequences(Schema $schema): void
     {
-        $schema->dropSequence($sequence->getName());
+        foreach ($schema->getSequences() as $sequence) {
+            $schema->dropSequence($sequence->getName());
+        }
     }
 
     /**
@@ -155,8 +157,10 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     }
 
     /**
-     * SQLite can't express autoincrement on a composite primary key, and reports every INTEGER
-     * PRIMARY KEY column as autoincrement.
+     * The autoincrement flag means nothing on SQLite, either way. SQLite can't express it on a
+     * composite primary key, so ezcontentclass.id reads back without it. And DBAL reports every
+     * single-column INTEGER PRIMARY KEY as autoincrement, so ezuser.contentobject_id reads back with
+     * it. Leaving out composite keys alone would still report the latter.
      */
     private static function ignoreAutoincrementOnSqlite(Column $column, AbstractPlatform $platform): void
     {
