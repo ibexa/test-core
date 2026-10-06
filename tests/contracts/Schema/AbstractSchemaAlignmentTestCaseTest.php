@@ -89,17 +89,17 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      */
     public static function provideDatabasesReadBackDifferently(): iterable
     {
-        $mySql = static function (Schema $schema): void {
+        $mysql = static function (Schema $schema): void {
             self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [191]);
         };
-        yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mySql)];
-        yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mySql)];
+        yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mysql)];
+        yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mysql)];
 
-        $postgreSql = static function (Schema $schema): void {
+        $postgresql = static function (Schema $schema): void {
             self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [null]);
             $schema->createSequence('alignment_composite_key_id_seq');
         };
-        yield 'PostgreSQL' => [new PostgreSQL100Platform(), self::createDatabaseSchema($postgreSql)];
+        yield 'PostgreSQL' => [new PostgreSQL100Platform(), self::createDatabaseSchema($postgresql)];
 
         $sqlite = static function (Schema $schema): void {
             self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [null]);
