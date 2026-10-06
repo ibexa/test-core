@@ -16,7 +16,10 @@ use Doctrine\DBAL\Platforms\PostgreSQL100Platform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\DoctrineSchema\Importer\SchemaImporter;
 use Ibexa\Tests\Contracts\Test\Core\Schema\Stub\SchemaAlignmentTestCaseStub;
 use PHPUnit\Framework\TestCase;
 
@@ -25,12 +28,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class AbstractSchemaAlignmentTestCaseTest extends TestCase
 {
+    private const SCHEMA_FILE = __DIR__ . '/../../integration/Schema/_fixtures/schema.yaml';
+
     /**
      * @dataProvider provideDatabasesReadBackDifferently
      */
     public function testIgnoresWhatTheDatabaseReadsBackDifferently(AbstractPlatform $platform, Schema $database): void
     {
-        self::assertSame([], $this->getReportedStatements($database, self::createSchema(), $platform));
+        self::assertSame([], $this->getReportedStatements($database, self::importSchema(), $platform));
     }
 
     /**
@@ -38,63 +43,69 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      */
     public function testReportsAMissingIndex(AbstractPlatform $platform, Schema $database): void
     {
-        $declared = self::createSchema();
-        $declared->getTable('plain_table')->addIndex(['code'], 'plain_table_code');
+        $declared = self::importSchema();
+        $declared->getTable('alignment_long_string')->addIndex(['title'], 'alignment_long_string_title');
 
         self::assertContains(
-            'CREATE INDEX plain_table_code ON plain_table (code)',
+            'CREATE INDEX alignment_long_string_title ON alignment_long_string (title)',
             $this->getReportedStatements($database, $declared, $platform)
         );
     }
 
     public function testComparesPrefixLengthsWhereTheDatabaseStoresThem(): void
     {
+        $database = self::createDatabaseSchema(static function (Schema $schema): void {
+            self::setNameLengths($schema, [100]);
+        });
+
         self::assertSame(
             [
-                'DROP INDEX versioned_table_name ON versioned_table',
-                'CREATE INDEX versioned_table_name ON versioned_table (name(191))',
+                'DROP INDEX alignment_prefix_length_name ON alignment_prefix_length',
+                'CREATE INDEX alignment_prefix_length_name ON alignment_prefix_length (name(191))',
             ],
-            $this->getReportedStatements(self::createSchema([100]), self::createSchema(), new MySQL80Platform())
+            $this->getReportedStatements($database, self::importSchema(), new MySQL80Platform())
         );
-    }
-
-    public function testComparesAStringLongerThanThePlatformAllowsAsText(): void
-    {
-        self::assertSame([], $this->getReportedStatements(
-            self::createDescriptionSchema('text', null),
-            self::createDescriptionSchema('string', 10000),
-            new SqlitePlatform()
-        ));
     }
 
     public function testStillComparesAStringWithinThePlatformLimit(): void
     {
+        $database = self::createDatabaseSchema(static function (Schema $schema): void {
+            self::readBackAsText($schema, 'title');
+        });
+
         self::assertContains(
-            'CREATE TABLE translated_table (id INTEGER NOT NULL, description VARCHAR(1000) NOT NULL, PRIMARY KEY(id))',
-            $this->getReportedStatements(
-                self::createDescriptionSchema('text', null),
-                self::createDescriptionSchema('string', 1000),
-                new SqlitePlatform()
-            )
+            'CREATE TABLE alignment_long_string (id INTEGER NOT NULL, description CLOB NOT NULL, '
+            . 'title VARCHAR(255) NOT NULL, PRIMARY KEY(id))',
+            $this->getReportedStatements($database, self::importSchema(), new SqlitePlatform())
         );
     }
 
     /**
-     * Each database schema is the declared one as that platform reads it back, plus the Doctrine
-     * Migrations versioning table.
+     * Each database schema is the declared one as that platform reads it back.
      *
      * @return iterable<string, array{AbstractPlatform, Schema}>
      */
     public static function provideDatabasesReadBackDifferently(): iterable
     {
-        yield 'MySQL' => [new MySQL80Platform(), self::withMigrationsTable(self::createSchema([191]))];
-        yield 'MariaDB' => [new MariaDb1027Platform(), self::withMigrationsTable(self::createSchema([191]))];
+        $mySql = static function (Schema $schema): void {
+            self::setNameLengths($schema, [191]);
+        };
+        yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mySql)];
+        yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mySql)];
 
-        $postgreSql = self::withMigrationsTable(self::createSchema([null]));
-        $postgreSql->createSequence('versioned_table_id_seq');
-        yield 'PostgreSQL' => [new PostgreSQL100Platform(), $postgreSql];
+        $postgreSql = static function (Schema $schema): void {
+            self::setNameLengths($schema, [null]);
+            $schema->createSequence('alignment_composite_key_id_seq');
+        };
+        yield 'PostgreSQL' => [new PostgreSQL100Platform(), self::createDatabaseSchema($postgreSql)];
 
-        yield 'SQLite' => [new SqlitePlatform(), self::withMigrationsTable(self::createSchema([null], false, true))];
+        $sqlite = static function (Schema $schema): void {
+            self::setNameLengths($schema, [null]);
+            $schema->getTable('alignment_composite_key')->getColumn('id')->setAutoincrement(false);
+            $schema->getTable('alignment_integer_key')->getColumn('id')->setAutoincrement(true);
+            self::readBackAsText($schema, 'description');
+        };
+        yield 'SQLite' => [new SqlitePlatform(), self::createDatabaseSchema($sqlite)];
     }
 
     /**
@@ -118,49 +129,45 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     }
 
     /**
-     * Defaults are what schema.yaml declares.
-     *
-     * @param array<int|string|null> $nameLengths
+     * The schema the fixture declares, imported the way SchemaBuilderEvent subscribers do.
      */
-    private static function createSchema(
-        array $nameLengths = ['191'],
-        bool $compositeKeyAutoincrement = true,
-        bool $integerKeyAutoincrement = false
-    ): Schema {
-        $schema = new Schema();
-
-        $versioned = $schema->createTable('versioned_table');
-        $versioned->addColumn('id', 'integer', ['autoincrement' => $compositeKeyAutoincrement]);
-        $versioned->addColumn('version', 'integer');
-        $versioned->addColumn('name', 'string', ['length' => 255]);
-        $versioned->setPrimaryKey(['id', 'version']);
-        $versioned->addIndex(['name'], 'versioned_table_name', [], ['lengths' => $nameLengths]);
-
-        $plain = $schema->createTable('plain_table');
-        $plain->addColumn('id', 'integer', ['autoincrement' => $integerKeyAutoincrement]);
-        $plain->addColumn('code', 'string', ['length' => 32]);
-        $plain->setPrimaryKey(['id']);
-
-        return $schema;
+    private static function importSchema(): Schema
+    {
+        return (new SchemaImporter())->importFromFile(self::SCHEMA_FILE);
     }
 
-    private static function createDescriptionSchema(string $type, ?int $length): Schema
+    /**
+     * The declared schema with what the database reads back differently, plus the Doctrine
+     * Migrations versioning table.
+     *
+     * @param callable(Schema): void $readBack
+     */
+    private static function createDatabaseSchema(callable $readBack): Schema
     {
-        $schema = new Schema();
-        $table = $schema->createTable('translated_table');
-        $table->addColumn('id', 'integer');
-        $table->addColumn('description', $type, ['length' => $length]);
-        $table->setPrimaryKey(['id']);
+        $schema = self::importSchema();
+        $readBack($schema);
 
-        return $schema;
-    }
-
-    private static function withMigrationsTable(Schema $schema): Schema
-    {
         $table = $schema->createTable('doctrine_migration_versions');
-        $table->addColumn('version', 'string', ['length' => 191]);
+        $table->addColumn('version', Types::STRING, ['length' => 191]);
         $table->setPrimaryKey(['version']);
 
         return $schema;
+    }
+
+    /**
+     * @param array<int|null> $lengths
+     */
+    private static function setNameLengths(Schema $schema, array $lengths): void
+    {
+        $table = $schema->getTable('alignment_prefix_length');
+        $table->dropIndex('alignment_prefix_length_name');
+        $table->addIndex(['name'], 'alignment_prefix_length_name', [], ['lengths' => $lengths]);
+    }
+
+    private static function readBackAsText(Schema $schema, string $columnName): void
+    {
+        $schema->getTable('alignment_long_string')->getColumn($columnName)
+            ->setType(Type::getType(Types::TEXT))
+            ->setLength(null);
     }
 }
