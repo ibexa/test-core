@@ -57,8 +57,10 @@ final class KernelProviderTest extends TestCase
      * @testWith [null, "The kernel class \"null\" must implement \"Symfony\\Component\\HttpKernel\\KernelInterface\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
      *           ["stdClass", "The kernel class \"stdClass\" must implement \"Symfony\\Component\\HttpKernel\\KernelInterface\". Ensure that the KERNEL_CLASS environment variable is set to a valid test kernel class."]
      */
-    public function testThrowsWhenKernelClassIsInvalid(?string $kernelClass, string $exceptionMessage): void
-    {
+    public function testThrowsWhenKernelClassIsInvalid(
+        ?string $kernelClass,
+        string $exceptionMessage
+    ): void {
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage($exceptionMessage);
 
@@ -129,9 +131,7 @@ final class NoopBootPlainKernel extends Kernel
         return [];
     }
 
-    public function registerContainerConfiguration(LoaderInterface $loader): void
-    {
-    }
+    public function registerContainerConfiguration(LoaderInterface $loader): void {}
 }
 
 final class NoopBootTestKernel extends IbexaTestKernel

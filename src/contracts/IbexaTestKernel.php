@@ -15,10 +15,18 @@ use Ibexa\Bundle\Core\IbexaCoreBundle;
 use Ibexa\Bundle\DoctrineSchema\DoctrineSchemaBundle;
 use Ibexa\Bundle\LegacySearchEngine\IbexaLegacySearchEngineBundle;
 use Ibexa\Bundle\RepositoryInstaller\IbexaRepositoryInstallerBundle;
+use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
+use Ibexa\Contracts\Core\Test\Persistence\Fixture;
+use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapter;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapterInterface;
 use JMS\TranslationBundle\JMSTranslationBundle;
@@ -57,15 +65,15 @@ use Symfony\Component\HttpKernel\Kernel;
  *
  * Bundles can be added by extending IbexaTestKernel::registerBundles() method (just like in any Kernel).
  *
- * This kernel does not register {@see \Ibexa\Bundle\Test\Core\IbexaTestCoreBundle} itself, so a kernel
- * that wants to use {@see \Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper} (and therefore needs
- * {@see \Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface} and the built-in hooks it
+ * This kernel does not register {@see IbexaTestCoreBundle} itself, so a kernel
+ * that wants to use {@see Bootstrapper} (and therefore needs
+ * {@see HooksExecutorInterface} and the built-in hooks it
  * registers) must `yield new IbexaTestCoreBundle();` from its own registerBundles() override.
  *
- * It does register {@see \Ibexa\Bundle\DoctrineSchema\DoctrineSchemaBundle} and
- * {@see \Ibexa\Bundle\RepositoryInstaller\IbexaRepositoryInstallerBundle}, which together make
+ * It does register {@see DoctrineSchemaBundle} and
+ * {@see IbexaRepositoryInstallerBundle}, which together make
  * SchemaBuilderEvent usable: the former provides
- * {@see \Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface}, the latter carries core's
+ * {@see SchemaBuilderInterface}, the latter carries core's
  * own BuildSchemaSubscriber (it lives there rather than in IbexaCoreBundle), without which the
  * event yields every other package's tables but none of core's. They are a pair —
  * IbexaRepositoryInstallerBundle::build() throws if DoctrineSchemaBundle is absent. A subclass must
@@ -127,10 +135,10 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     /**
      * @deprecated 4.6.33 The "IbexaTestKernel::getSchemaFiles()" method is deprecated, will be
      *   removed in 6.0. The test schema is built from the SchemaBuilderEvent by
-     *   {@see \Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook} - whichever bundles a
+     *   {@see DatabaseSchemaHook} - whichever bundles a
      *   kernel registers is what the schema contains - so a kernel no longer declares schema files
      *   and overriding this serves no purpose. Retained because
-     *   {@see \Ibexa\Contracts\Core\Test\IbexaTestKernelInterface} still mandates it.
+     *   {@see IbexaTestKernelInterface} still mandates it.
      *
      * @return iterable<string>
      */
@@ -142,14 +150,14 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     /**
      * @deprecated 4.6.33 The "IbexaTestKernel::getFixtures()" method is deprecated, will be removed in
      *   6.0. Declare a kernel's fixtures with the `ibexa.test.fixture_files` parameter, or with a
-     *   service tagged {@see \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface::TAG},
+     *   service tagged {@see FixtureProviderInterface::TAG},
      *   instead.
      *
      * Returns nothing: the baseline repository content this used to yield is imported
-     * unconditionally by {@see \Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook}, so
+     * unconditionally by {@see BaseFixtureHook}, so
      * yielding it here as well would import it twice.
      *
-     * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
+     * @return iterable<Fixture>
      */
     public function getFixtures(): iterable
     {
@@ -301,8 +309,11 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
      *
      * @phpstan-param class-string $class
      */
-    protected static function addSyntheticService(ContainerBuilder $container, string $class, ?string $id = null): void
-    {
+    protected static function addSyntheticService(
+        ContainerBuilder $container,
+        string $class,
+        ?string $id = null
+    ): void {
         $id = $id ?? $class;
         if ($container->has($id)) {
             throw new LogicException(sprintf(

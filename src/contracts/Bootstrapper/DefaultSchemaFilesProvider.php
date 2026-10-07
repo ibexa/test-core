@@ -8,13 +8,15 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
+use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
+use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
- * The built-in legacy schema file {@see \Ibexa\Contracts\Test\Core\IbexaTestKernel} contributes by
+ * The built-in legacy schema file {@see IbexaTestKernel} contributes by
  * default. Deliberately not tagged as a {@see SchemaFilesProviderInterface} — the kernel-method
  * fallback ({@see SchemaFilesKernelMethodProvider}) already always wins for every kernel, since
- * {@see \Ibexa\Contracts\Core\Test\IbexaTestKernelInterface} makes `getSchemaFiles()` mandatory. This
+ * {@see IbexaTestKernelInterface} makes `getSchemaFiles()` mandatory. This
  * class exists purely so another provider can constructor-inject it directly to compose with the
  * built-in default without going through a Kernel method.
  */

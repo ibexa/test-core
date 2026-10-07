@@ -22,6 +22,7 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException;
@@ -33,22 +34,22 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 final class BootstrapperTest extends TestCase
 {
     /**
-     * @var \Ibexa\Contracts\Test\Core\IbexaTestKernel&\PHPUnit\Framework\MockObject\MockObject
+     * @var IbexaTestKernel&MockObject
      */
     private IbexaTestKernel $kernel;
 
     /**
-     * @var \Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface&\PHPUnit\Framework\MockObject\MockObject
+     * @var HooksExecutorInterface&MockObject
      */
     private HooksExecutorInterface $hooksExecutor;
 
     /**
-     * @var \Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface&\PHPUnit\Framework\MockObject\MockObject
+     * @var KernelProviderInterface&MockObject
      */
     private KernelProviderInterface $kernelProvider;
 
     /**
-     * @var \Ibexa\Contracts\Test\Core\Bootstrapper\DatabasePreparerInterface&\PHPUnit\Framework\MockObject\MockObject
+     * @var DatabasePreparerInterface&MockObject
      */
     private DatabasePreparerInterface $databasePreparer;
 
@@ -176,7 +177,7 @@ final class BootstrapperTest extends TestCase
         array $options,
         bool $expectedLoadBaseFixture
     ): void {
-        $hooksExecutor = $this->createHooksExecutor($this->createStub(Connection::class));
+        $hooksExecutor = $this->createHooksExecutor(self::createStub(Connection::class));
         $this->hooksExecutor
             ->expects(self::once())
             ->method('configureOptions')
@@ -293,12 +294,12 @@ final class BootstrapperTest extends TestCase
 
         return new HooksExecutor([
             DatabaseSchemaHook::class => new DatabaseSchemaHook(
-                $this->createStub(SchemaBuilderInterface::class),
+                self::createStub(SchemaBuilderInterface::class),
                 $connection
             ),
             BaseFixtureHook::class => new BaseFixtureHook(new DefaultFixtureProvider(), $fixtureImporter),
             FixtureHook::class => new FixtureHook(
-                $this->createStub(FixtureProviderInterface::class),
+                self::createStub(FixtureProviderInterface::class),
                 $fixtureImporter
             ),
         ]);
