@@ -18,9 +18,10 @@
         "symfony/yaml": "^5.4"
     },
     "require-dev": {
-        "ibexa/code-style": "^1.1",
+        "ibexa/code-style": "~2.3.1",
         "ibexa/core": "~4.6.x-dev",
         "ibexa/core-persistence": "~4.6.x-dev",
+        "ibexa/doctrine-migrations": "~4.6.x-dev",
         "ibexa/doctrine-schema": "~4.6.x-dev",
         "ibexa/polyfill-php82": "^1.0",
         "knplabs/knp-menu": "^3.3",

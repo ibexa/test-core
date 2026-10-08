@@ -17,7 +17,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *
  * Register an implementation as a service tagged {@see self::TAG} (with an optional "priority" tag
  * attribute controlling execution order) to have it picked up by
- * {@see \Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface} automatically — no changes
+ * {@see HooksExecutorInterface} automatically — no changes
  * to ibexa/test-core are needed for a downstream bundle to contribute its own hook.
  */
 interface HookInterface

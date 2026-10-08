@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
+use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\YamlFixture;
 
 /**
@@ -22,7 +23,7 @@ use Ibexa\Contracts\Core\Test\Persistence\Fixture\YamlFixture;
 final class DefaultFixtureProvider
 {
     /**
-     * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
+     * @return iterable<Fixture>
      */
     public function getFixtures(): iterable
     {

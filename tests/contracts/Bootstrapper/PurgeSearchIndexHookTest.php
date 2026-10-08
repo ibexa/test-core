@@ -46,8 +46,10 @@ final class PurgeSearchIndexHookTest extends TestCase
      *
      * @return array<string, mixed>
      */
-    private function resolve(PurgeSearchIndexHook $hook, array $options): array
-    {
+    private function resolve(
+        PurgeSearchIndexHook $hook,
+        array $options
+    ): array {
         $resolver = new OptionsResolver();
         $hook->configureOptions($resolver);
 

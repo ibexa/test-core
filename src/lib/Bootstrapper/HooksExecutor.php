@@ -35,7 +35,10 @@ final class HooksExecutor implements HooksExecutorInterface
             $resolver->define($hookId)
                 ->default([])
                 ->allowedTypes('array')
-                ->normalize(static function (Options $options, array $value) use ($hook): array {
+                ->normalize(static function (
+                    Options $options,
+                    array $value
+                ) use ($hook): array {
                     $hookResolver = new OptionsResolver();
                     $hook->configureOptions($hookResolver);
 

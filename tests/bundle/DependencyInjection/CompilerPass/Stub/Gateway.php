@@ -15,6 +15,4 @@ use Ibexa\Contracts\CorePersistence\Gateway\AbstractDoctrineDatabase;
  *
  * @extends AbstractDoctrineDatabase<array<string, mixed>>
  */
-abstract class Gateway extends AbstractDoctrineDatabase
-{
-}
+abstract class Gateway extends AbstractDoctrineDatabase {}
