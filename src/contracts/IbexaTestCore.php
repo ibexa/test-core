@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Ibexa\Contracts\Test\Core;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
@@ -22,8 +23,12 @@ use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
+use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
+use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
+use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Core\Repository\Values\User\UserReference;
 use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -33,7 +38,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @internal use IbexaTestCoreInterface instead.
  *
- * @see \Ibexa\Contracts\Test\Core\IbexaTestCoreInterface
+ * @see IbexaTestCoreInterface
  */
 final class IbexaTestCore implements IbexaTestCoreInterface
 {
@@ -44,8 +49,10 @@ final class IbexaTestCore implements IbexaTestCoreInterface
 
     private IbexaTestKernelInterface $kernel;
 
-    public function __construct(ContainerInterface $container, IbexaTestKernelInterface $kernel)
-    {
+    public function __construct(
+        ContainerInterface $container,
+        IbexaTestKernelInterface $kernel
+    ) {
         $this->container = $container;
         $this->kernel = $kernel;
     }
@@ -53,12 +60,12 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     /**
      * @deprecated 4.6.33 The "IbexaTestCore::loadSchema()" method is deprecated, will be removed in
      *   6.0. Installing the schema from a test case rules out running tests inside a transaction; the
-     *   Bootstrapper's {@see \Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook} does it once
+     *   Bootstrapper's {@see DatabaseSchemaHook} does it once
      *   per run instead, which is what DAMADoctrineTestBundle needs.
      */
     public function loadSchema(): void
     {
-        /** @var \Ibexa\Tests\Core\Repository\LegacySchemaImporter $schemaImporter */
+        /** @var LegacySchemaImporter $schemaImporter */
         $schemaImporter = $this->container->get(LegacySchemaImporter::class);
         foreach ($this->getSchemaFiles() as $schemaFile) {
             $schemaImporter->importSchema($schemaFile);
@@ -79,15 +86,15 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     /**
      * @deprecated 4.6.33 The "IbexaTestCore::loadFixtures()" method is deprecated, will be removed in
      *   6.0. Importing fixtures from a test case rules out running tests inside a transaction; the
-     *   Bootstrapper's {@see \Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook} and
-     *   {@see \Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook} do it once per run instead, which
+     *   Bootstrapper's {@see BaseFixtureHook} and
+     *   {@see FixtureHook} do it once per run instead, which
      *   is what DAMADoctrineTestBundle needs.
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws DBALException
      */
     public function loadFixtures(?callable $postLoadFixtures = null): void
     {
-        /** @var \Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter $fixtureImporter */
+        /** @var FixtureImporter $fixtureImporter */
         $fixtureImporter = $this->container->get(FixtureImporter::class);
         foreach ($this->getFixtures() as $fixture) {
             $fixtureImporter->import($fixture);
@@ -102,7 +109,7 @@ final class IbexaTestCore implements IbexaTestCoreInterface
      * @deprecated 4.6.33 The "IbexaTestCore::getFixtures()" method is deprecated, will be removed in
      *   6.0. It exists only to feed {@see self::loadFixtures()}.
      *
-     * @return iterable<\Ibexa\Contracts\Core\Test\Persistence\Fixture>
+     * @return iterable<Fixture>
      */
     public function getFixtures(): iterable
     {
@@ -125,8 +132,11 @@ final class IbexaTestCore implements IbexaTestCoreInterface
      *
      * @return T
      */
-    public function getServiceByClassName(string $className, ?string $id = null, bool $prefix = true): object
-    {
+    public function getServiceByClassName(
+        string $className,
+        ?string $id = null,
+        bool $prefix = true
+    ): object {
         $serviceId = $this->getTestServiceId($id, $className, $prefix);
         $service = $this->container->get($serviceId);
         assert(is_object($service) && is_a($service, $className));
@@ -134,8 +144,11 @@ final class IbexaTestCore implements IbexaTestCoreInterface
         return $service;
     }
 
-    private function getTestServiceId(?string $id, string $className, bool $prefix): string
-    {
+    private function getTestServiceId(
+        ?string $id,
+        string $className,
+        bool $prefix
+    ): string {
         $id = $id ?? $className;
 
         return $prefix ? $this->kernel::getAliasServiceId($id) : $id;

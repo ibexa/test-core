@@ -14,6 +14,4 @@ use Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub\Uninstall
  * The parent is deliberately never declared, so this class cannot be loaded. @phpstan-ignore does
  * not reach an extends clause, hence the excludePaths.analyse entry in phpstan.neon.
  */
-final class ServiceWithUninstalledParent extends ParentFromUninstalledDependency
-{
-}
+final class ServiceWithUninstalledParent extends ParentFromUninstalledDependency {}

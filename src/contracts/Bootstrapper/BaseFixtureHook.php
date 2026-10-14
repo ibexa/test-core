@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
+use Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass\RemoveUnsatisfiableHooksPass;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -28,7 +29,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * switched off there - see {@see self::OPTION_LOAD_BASE_FIXTURE}.
  *
  * Requires `FixtureImporter`; removed from the container when it is missing, by
- * {@see \Ibexa\Bundle\Test\Core\DependencyInjection\CompilerPass\RemoveUnsatisfiableHooksPass}.
+ * {@see RemoveUnsatisfiableHooksPass}.
  */
 final class BaseFixtureHook implements HookInterface
 {

@@ -62,8 +62,10 @@ final class FixtureHookTest extends TestCase
      *
      * @return array<string, mixed>
      */
-    private function resolve(FixtureHook $hook, array $options): array
-    {
+    private function resolve(
+        FixtureHook $hook,
+        array $options
+    ): array {
         $resolver = new OptionsResolver();
         $hook->configureOptions($resolver);
 
@@ -71,7 +73,7 @@ final class FixtureHookTest extends TestCase
     }
 
     /**
-     * @param list<\Ibexa\Contracts\Core\Test\Persistence\Fixture> $fixtures
+     * @param list<Fixture> $fixtures
      */
     private function hookReturningFixtures(array $fixtures): FixtureHook
     {

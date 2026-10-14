@@ -23,8 +23,10 @@ final class DatabasePreparer implements DatabasePreparerInterface
         $this->consoleCommandRunner = new ConsoleCommandRunner();
     }
 
-    public function prepareDatabase(KernelInterface $kernel, bool $runSchemaUpdate): void
-    {
+    public function prepareDatabase(
+        KernelInterface $kernel,
+        bool $runSchemaUpdate
+    ): void {
         $application = new Application($kernel);
         $application->setAutoExit(false);
         $application->setCatchExceptions(false);

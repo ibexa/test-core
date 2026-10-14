@@ -36,7 +36,7 @@ abstract class IbexaKernelTestCase extends KernelTestCase
 
         if (!isset($this->ibexaCore)) {
             if (!self::$kernel instanceof IbexaTestKernelInterface) {
-                throw new \LogicException(sprintf(
+                throw new LogicException(sprintf(
                     '%s requires %s as an argument, but received %s. Ensure that KERNEL_CLASS env variable is set properly.',
                     IbexaTestCore::class,
                     IbexaTestKernelInterface::class,

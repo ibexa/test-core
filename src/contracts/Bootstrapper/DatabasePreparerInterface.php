@@ -22,5 +22,8 @@ interface DatabasePreparerInterface
     /**
      * @throws \Exception command failures propagate as-is
      */
-    public function prepareDatabase(KernelInterface $kernel, bool $runSchemaUpdate): void;
+    public function prepareDatabase(
+        KernelInterface $kernel,
+        bool $runSchemaUpdate
+    ): void;
 }

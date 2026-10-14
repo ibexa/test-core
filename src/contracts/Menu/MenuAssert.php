@@ -18,16 +18,22 @@ final class MenuAssert
     /**
      * @param string[] $path
      */
-    public static function assertMenuContainsPath(array $path, ItemInterface $menu, string $message = ''): void
-    {
+    public static function assertMenuContainsPath(
+        array $path,
+        ItemInterface $menu,
+        string $message = ''
+    ): void {
         Assert::assertThat($menu, new ContainsPath($path), $message);
     }
 
     /**
      * @param string[] $path
      */
-    public static function assertMenuNotContainsPath(array $path, ItemInterface $menu, string $message = ''): void
-    {
+    public static function assertMenuNotContainsPath(
+        array $path,
+        ItemInterface $menu,
+        string $message = ''
+    ): void {
         Assert::assertThat($menu, new LogicalNot(new ContainsPath($path)), $message);
     }
 }

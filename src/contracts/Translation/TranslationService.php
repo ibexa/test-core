@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Ibexa\Contracts\Test\Core\Translation;
 
 use JMS\TranslationBundle\Translation\Comparison\ChangeSet;
+use JMS\TranslationBundle\Translation\Config;
 use JMS\TranslationBundle\Translation\ConfigFactory;
 use JMS\TranslationBundle\Translation\Updater;
 use Twig\Environment;
@@ -63,7 +64,7 @@ final class TranslationService
         $this->updater->process($config);
     }
 
-    private function getConfig(string $configName): \JMS\TranslationBundle\Translation\Config
+    private function getConfig(string $configName): Config
     {
         $this->configureHandlerForMissingTwig();
 

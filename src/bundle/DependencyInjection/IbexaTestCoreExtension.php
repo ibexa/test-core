@@ -20,8 +20,10 @@ final class IbexaTestCoreExtension extends Extension
      *
      * @throws \Exception
      */
-    public function load(array $configs, ContainerBuilder $container): void
-    {
+    public function load(
+        array $configs,
+        ContainerBuilder $container
+    ): void {
         // This bundle only makes sense for a test kernel — Bootstrapper always boots one with the
         // "test" environment (see KernelProvider) — and some of its services (e.g. DatabaseSchemaHook)
         // depend on classes a consuming package only autoloads via its own autoload-dev, unavailable

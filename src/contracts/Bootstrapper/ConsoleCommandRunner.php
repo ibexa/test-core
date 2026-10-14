@@ -22,8 +22,10 @@ final class ConsoleCommandRunner
      *
      * @throws \Exception
      */
-    public function run(Application $application, array $parameters): void
-    {
+    public function run(
+        Application $application,
+        array $parameters
+    ): void {
         $exitCode = $application->run(new ArrayInput($parameters));
         if ($exitCode !== 0) {
             throw new RuntimeException(sprintf(

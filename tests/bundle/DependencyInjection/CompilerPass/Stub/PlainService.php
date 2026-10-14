@@ -8,6 +8,4 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub;
 
-final class PlainService
-{
-}
+final class PlainService {}

@@ -112,13 +112,18 @@ final class Bootstrapper
      *
      * @return array<string, mixed>
      */
-    private static function resolveOptions(HooksExecutorInterface $hooksExecutor, array $options): array
-    {
+    private static function resolveOptions(
+        HooksExecutorInterface $hooksExecutor,
+        array $options
+    ): array {
         $resolver = new OptionsResolver();
         $resolver->define(self::class)
             ->default([])
             ->allowedTypes('array')
-            ->normalize(static function (Options $options, array $value): array {
+            ->normalize(static function (
+                Options $options,
+                array $value
+            ): array {
                 $ownResolver = new OptionsResolver();
                 $ownResolver->define(self::OPTION_PREPARE_DATABASE)
                     ->default(true)
@@ -161,7 +166,10 @@ final class Bootstrapper
 
         $resolver->addNormalizer(
             BaseFixtureHook::class,
-            static function (Options $options, array $value): array {
+            static function (
+                Options $options,
+                array $value
+            ): array {
                 if (!array_key_exists(BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE, $value)) {
                     $value[BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE] = $options[FixtureHook::class][FixtureHook::OPTION_LOAD_FIXTURES];
                 }
@@ -183,8 +191,11 @@ final class Bootstrapper
      *
      * @return T
      */
-    private static function getService(ContainerInterface $container, string $id, string $expectedType): object
-    {
+    private static function getService(
+        ContainerInterface $container,
+        string $id,
+        string $expectedType
+    ): object {
         try {
             $service = $container->get($id);
         } catch (ServiceNotFoundException $e) {

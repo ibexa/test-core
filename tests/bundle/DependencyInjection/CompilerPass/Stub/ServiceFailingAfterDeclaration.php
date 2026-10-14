@@ -12,8 +12,6 @@ namespace Ibexa\Tests\Bundle\Test\Core\DependencyInjection\CompilerPass\Stub;
  * Declares itself, then fails — so the class is loaded by the time the Error surfaces. The message
  * is not exposed as a constant: reading one would load the class and set the throw off early.
  */
-final class ServiceFailingAfterDeclaration
-{
-}
+final class ServiceFailingAfterDeclaration {}
 
 throw new \Error('failure unrelated to loading');

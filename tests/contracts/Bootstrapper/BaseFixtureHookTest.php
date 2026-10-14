@@ -15,6 +15,7 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -91,7 +92,7 @@ final class BaseFixtureHookTest extends TestCase
     /**
      * @param list<string> $inserted receives the tables, in order, an insert was issued for
      *
-     * @return \Doctrine\DBAL\Connection&\PHPUnit\Framework\MockObject\MockObject
+     * @return Connection&MockObject
      */
     private function connectionRecordingInserts(array &$inserted): Connection
     {
@@ -118,8 +119,10 @@ final class BaseFixtureHookTest extends TestCase
      *
      * @return array<string, mixed>
      */
-    private function resolve(BaseFixtureHook $hook, array $options): array
-    {
+    private function resolve(
+        BaseFixtureHook $hook,
+        array $options
+    ): array {
         $resolver = new OptionsResolver();
         $hook->configureOptions($resolver);
 
