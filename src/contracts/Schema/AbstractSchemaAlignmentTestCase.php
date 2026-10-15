@@ -21,12 +21,13 @@ use Doctrine\DBAL\Types\StringType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 
 /**
  * Checks that the database the integration suite runs on has the schema SchemaBuilderEvent declares.
  *
- * Integration suites run once with each install path: {@see \Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook}
+ * Integration suites run once with each install path: {@see DatabaseSchemaHook}
  * executes the SchemaBuilderEvent schema, ibexa/core's DoctrineMigrationsSchemaHook runs the Doctrine
  * migrations instead. On the latter, this test is what proves both paths create the same schema; on the
  * former, it passes by construction. Since a schema change always comes with a new migration, a fresh
@@ -90,8 +91,11 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      *
      * @return string[]
      */
-    private static function compareSchemas(Schema $database, Schema $declared, AbstractPlatform $platform): array
-    {
+    private static function compareSchemas(
+        Schema $database,
+        Schema $declared,
+        AbstractPlatform $platform
+    ): array {
         $database = clone $database;
         $declared = clone $declared;
         if ($database->hasTable(self::MIGRATIONS_TABLE)) {
@@ -104,8 +108,10 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
         return (new Comparator())->compare($database, $declared)->toSql($platform);
     }
 
-    private static function normalize(Schema $schema, AbstractPlatform $platform): void
-    {
+    private static function normalize(
+        Schema $schema,
+        AbstractPlatform $platform
+    ): void {
         self::ignoreSequences($schema);
 
         foreach ($schema->getTables() as $table) {
@@ -138,8 +144,11 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      * Only MySQL and MariaDB store index prefix lengths, so other platforms read them back as null.
      * On those two, schema.yaml gives them as strings, and the database as integers.
      */
-    private static function normalizeIndexPrefixLengths(Table $table, Index $index, AbstractPlatform $platform): void
-    {
+    private static function normalizeIndexPrefixLengths(
+        Table $table,
+        Index $index,
+        AbstractPlatform $platform
+    ): void {
         if ($index->isPrimary() || !$index->hasOption('lengths')) {
             return;
         }
@@ -160,8 +169,10 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      * single-column INTEGER PRIMARY KEY as autoincrement, so ezuser.contentobject_id reads back with
      * it. Leaving out composite keys alone would still report the latter.
      */
-    private static function ignoreAutoincrementOnSqlite(Column $column, AbstractPlatform $platform): void
-    {
+    private static function ignoreAutoincrementOnSqlite(
+        Column $column,
+        AbstractPlatform $platform
+    ): void {
         if (!$platform instanceof SqlitePlatform) {
             return;
         }
@@ -173,8 +184,10 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      * A string column longer than the platform's VARCHAR limit is created as a text one (a CLOB on
      * SQLite, where the limit is 4000), and read back as such.
      */
-    private static function treatOverlongStringAsText(Column $column, AbstractPlatform $platform): void
-    {
+    private static function treatOverlongStringAsText(
+        Column $column,
+        AbstractPlatform $platform
+    ): void {
         $length = $column->getLength();
         if (
             !$column->getType() instanceof StringType
@@ -193,8 +206,11 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      *
      * @param array<string, mixed> $options
      */
-    private static function replaceIndexOptions(Table $table, Index $index, array $options): void
-    {
+    private static function replaceIndexOptions(
+        Table $table,
+        Index $index,
+        array $options
+    ): void {
         $table->dropIndex($index->getName());
         if ($index->isUnique()) {
             $table->addUniqueIndex($index->getColumns(), $index->getName(), $options);

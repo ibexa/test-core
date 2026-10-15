@@ -22,8 +22,10 @@ final class SchemaAlignmentTestCaseStub extends AbstractSchemaAlignmentTestCase
 
     private SchemaBuilderInterface $schemaBuilder;
 
-    public function __construct(Connection $connection, SchemaBuilderInterface $schemaBuilder)
-    {
+    public function __construct(
+        Connection $connection,
+        SchemaBuilderInterface $schemaBuilder
+    ) {
         parent::__construct('testDatabaseMatchesTheSchemaBuilderEventSchema');
 
         $this->connection = $connection;

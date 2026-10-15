@@ -35,16 +35,20 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     /**
      * @dataProvider provideDatabasesReadBackDifferently
      */
-    public function testIgnoresWhatTheDatabaseReadsBackDifferently(AbstractPlatform $platform, Schema $database): void
-    {
+    public function testIgnoresWhatTheDatabaseReadsBackDifferently(
+        AbstractPlatform $platform,
+        Schema $database
+    ): void {
         self::assertSame([], $this->getReportedStatements($database, self::importSchema(), $platform));
     }
 
     /**
      * @dataProvider provideDatabasesReadBackDifferently
      */
-    public function testReportsAMissingIndex(AbstractPlatform $platform, Schema $database): void
-    {
+    public function testReportsAMissingIndex(
+        AbstractPlatform $platform,
+        Schema $database
+    ): void {
         $declared = self::importSchema();
         $declared->getTable('alignment_long_string')->addIndex(['title'], 'alignment_long_string_title');
 
@@ -115,16 +119,19 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      *
      * @return string[]
      */
-    private function getReportedStatements(Schema $database, Schema $declared, AbstractPlatform $platform): array
-    {
-        $schemaManager = $this->createStub(AbstractSchemaManager::class);
+    private function getReportedStatements(
+        Schema $database,
+        Schema $declared,
+        AbstractPlatform $platform
+    ): array {
+        $schemaManager = self::createStub(AbstractSchemaManager::class);
         $schemaManager->method('createSchema')->willReturn($database);
 
-        $connection = $this->createStub(Connection::class);
+        $connection = self::createStub(Connection::class);
         $connection->method('getSchemaManager')->willReturn($schemaManager);
         $connection->method('getDatabasePlatform')->willReturn($platform);
 
-        $schemaBuilder = $this->createStub(SchemaBuilderInterface::class);
+        $schemaBuilder = self::createStub(SchemaBuilderInterface::class);
         $schemaBuilder->method('buildSchema')->willReturn($declared);
 
         return (new SchemaAlignmentTestCaseStub($connection, $schemaBuilder))->getReportedStatements();
@@ -159,8 +166,11 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     /**
      * @param array<int|null> $lengths
      */
-    private static function setIndexLengths(Table $table, string $indexName, array $lengths): void
-    {
+    private static function setIndexLengths(
+        Table $table,
+        string $indexName,
+        array $lengths
+    ): void {
         $index = $table->getIndex($indexName);
         $table->dropIndex($indexName);
         $table->addIndex(
