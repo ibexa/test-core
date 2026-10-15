@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core\Bootstrapper;
 
+use Doctrine\DBAL\Connection;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -48,11 +50,16 @@ final class DatabasePreparer implements DatabasePreparerInterface
         // dropping a database that was never created (e.g. this bootstrap's very first run).
         // $_ENV takes precedence to match doctrine.php's own source of truth for this value.
         $databaseUrl = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
-        if (!is_string($databaseUrl) || !str_starts_with($databaseUrl, 'sqlite')) {
+        $isSqlite = is_string($databaseUrl) && str_starts_with($databaseUrl, 'sqlite');
+        if (!$isSqlite) {
             $dropDatabaseArgs['--if-exists'] = '1';
         }
 
         $this->consoleCommandRunner->run($application, $dropDatabaseArgs);
+
+        if ($isSqlite) {
+            $this->createSqliteDatabaseDirectory($kernel);
+        }
 
         $this->consoleCommandRunner->run($application, [
             'command' => 'doctrine:database:create',
@@ -66,6 +73,29 @@ final class DatabasePreparer implements DatabasePreparerInterface
                 '--force' => true,
                 '--quiet' => true,
             ]);
+        }
+    }
+
+    /**
+     * SQLite creates the database file when the connection opens, but not the directory it is in
+     * (e.g. "var/" on a fresh checkout). Symfony 5.4 created "var/log" while building the kernel
+     * container, which hid this; Symfony 7 no longer does.
+     */
+    private function createSqliteDatabaseDirectory(KernelInterface $kernel): void
+    {
+        $connection = $kernel->getContainer()->get('database_connection');
+        if (!$connection instanceof Connection) {
+            return;
+        }
+
+        $path = $connection->getParams()['path'] ?? null;
+        if (!is_string($path) || $path === '') {
+            return;
+        }
+
+        $directory = dirname($path);
+        if (!is_dir($directory) && !mkdir($directory, 0777, true) && !is_dir($directory)) {
+            throw new RuntimeException(sprintf('Unable to create SQLite database directory "%s".', $directory));
         }
     }
 }
