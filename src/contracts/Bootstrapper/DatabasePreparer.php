@@ -33,11 +33,10 @@ final class DatabasePreparer implements DatabasePreparerInterface
         $application->setAutoExit(false);
         $application->setCatchExceptions(false);
 
-        // Read from the connection, not $_ENV: doctrine.php only fills in its default DATABASE_URL
-        // while the container is being built, so it is missing when the container comes from cache.
-        $kernel->boot();
-        $sqliteDatabasePath = $this->getSqliteDatabasePath($kernel);
-
+        // In-memory SQLite (e.g. "sqlite://:memory:") is deliberately unsupported: it can't
+        // participate in the per-test DAMA transaction/rollback most consumers rely on, and its
+        // connection params carry neither a "path" nor a "dbname" doctrine:database:drop could act
+        // on — see doctrine.php's default DATABASE_URL, which points at a real file for this reason.
         $dropDatabaseArgs = [
             'command' => 'doctrine:database:drop',
             '--force' => '1',
@@ -49,14 +48,17 @@ final class DatabasePreparer implements DatabasePreparerInterface
         // unneeded there anyway: SqliteSchemaManager::dropDatabase() already no-ops safely for a
         // file that doesn't exist. Every other supported platform still needs it, to avoid an error
         // dropping a database that was never created (e.g. this bootstrap's very first run).
-        if ($sqliteDatabasePath === null) {
+        // $_ENV takes precedence to match doctrine.php's own source of truth for this value.
+        $databaseUrl = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
+        $isSqlite = is_string($databaseUrl) && str_starts_with($databaseUrl, 'sqlite');
+        if (!$isSqlite) {
             $dropDatabaseArgs['--if-exists'] = '1';
         }
 
         $this->consoleCommandRunner->run($application, $dropDatabaseArgs);
 
-        if ($sqliteDatabasePath !== null) {
-            $this->createDirectory(dirname($sqliteDatabasePath));
+        if ($isSqlite) {
+            $this->createSqliteDatabaseDirectory($kernel);
         }
 
         $this->consoleCommandRunner->run($application, [
@@ -75,44 +77,28 @@ final class DatabasePreparer implements DatabasePreparerInterface
     }
 
     /**
-     * Returns the SQLite database file path, or null when the connection is not SQLite.
+     * SQLite creates the database file when the connection opens, but not the directory it is in
+     * (e.g. "var/" on a fresh checkout). Symfony 5.4 created "var/log" while building the kernel
+     * container, which hid this; Symfony 7 no longer does.
      *
-     * In-memory SQLite (e.g. "sqlite://:memory:") is deliberately unsupported: it can't
-     * participate in the per-test DAMA transaction/rollback most consumers rely on, and its
-     * connection params carry neither a "path" nor a "dbname" doctrine:database:drop could act
-     * on — see doctrine.php's default DATABASE_URL, which points at a real file for this reason.
+     * The kernel is already booted by the doctrine:database:drop run before this.
      */
-    private function getSqliteDatabasePath(KernelInterface $kernel): ?string
+    private function createSqliteDatabaseDirectory(KernelInterface $kernel): void
     {
         $connection = $kernel->getContainer()->get('database_connection');
         if (!$connection instanceof Connection) {
-            return null;
+            return;
         }
 
-        // DoctrineBundle's own doctrine:database:create reads the params the same way.
-        $params = $connection->getParams();
-        $driver = $params['driver'] ?? null;
-        if (!is_string($driver) || !str_contains($driver, 'sqlite')) {
-            return null;
-        }
-
-        $path = $params['path'] ?? null;
+        // DoctrineBundle's own doctrine:database:create reads the path the same way.
+        $path = $connection->getParams()['path'] ?? null;
         if (!is_string($path) || $path === '') {
             throw new RuntimeException(
                 'SQLite test database needs a file path, in-memory SQLite is not supported. Check DATABASE_URL.'
             );
         }
 
-        return $path;
-    }
-
-    /**
-     * SQLite creates the database file when the connection opens, but not the directory it is in
-     * (e.g. "var/" on a fresh checkout). Symfony 5.4 created "var/log" while building the kernel
-     * container, which hid this; Symfony 7 no longer does.
-     */
-    private function createDirectory(string $directory): void
-    {
+        $directory = dirname($path);
         if (!is_dir($directory) && !@mkdir($directory, 0777, true) && !is_dir($directory)) {
             throw new RuntimeException(sprintf('Unable to create SQLite database directory "%s".', $directory));
         }
