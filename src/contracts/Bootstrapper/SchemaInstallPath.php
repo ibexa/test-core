@@ -18,9 +18,9 @@ use Ibexa\Bundle\RepositoryInstaller\Bootstrapper\DoctrineMigrationsSchemaHook;
  * Which path a run takes is up to the package, usually an environment variable its CI sets:
  *
  * ```php
- * $schemaBuilderEventEnabled = getenv('IBEXA_TEST_SCHEMA_BUILDER_EVENT_ENABLED') !== '0';
+ * $doctrineMigrationsEnabled = getenv('IBEXA_TEST_SCHEMA_BUILDER_EVENT_ENABLED') === '0';
  *
- * (new Bootstrapper())->bootstrap(null, SchemaInstallPath::getBootstrapperOptions($schemaBuilderEventEnabled));
+ * (new Bootstrapper())->bootstrap(null, SchemaInstallPath::getBootstrapperOptions($doctrineMigrationsEnabled));
  * ```
  */
 final class SchemaInstallPath
@@ -28,12 +28,12 @@ final class SchemaInstallPath
     /**
      * @return array<class-string<HookInterface>, array<string, bool>>
      */
-    public static function getBootstrapperOptions(bool $schemaBuilderEventEnabled): array
+    public static function getBootstrapperOptions(bool $doctrineMigrationsEnabled): array
     {
         return [
-            DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => $schemaBuilderEventEnabled],
+            DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => !$doctrineMigrationsEnabled],
             DoctrineMigrationsSchemaHook::class => [
-                DoctrineMigrationsSchemaHook::OPTION_INSTALL_SCHEMA => !$schemaBuilderEventEnabled,
+                DoctrineMigrationsSchemaHook::OPTION_INSTALL_SCHEMA => $doctrineMigrationsEnabled,
             ],
         ];
     }

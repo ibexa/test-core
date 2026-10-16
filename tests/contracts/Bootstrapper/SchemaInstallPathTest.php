@@ -24,10 +24,10 @@ final class SchemaInstallPathTest extends TestCase
      * @param array<string, array<string, bool>> $expectedOptions
      */
     public function testEnablesExactlyOneSchemaHook(
-        bool $schemaBuilderEventEnabled,
+        bool $doctrineMigrationsEnabled,
         array $expectedOptions
     ): void {
-        self::assertSame($expectedOptions, SchemaInstallPath::getBootstrapperOptions($schemaBuilderEventEnabled));
+        self::assertSame($expectedOptions, SchemaInstallPath::getBootstrapperOptions($doctrineMigrationsEnabled));
     }
 
     /**
@@ -36,7 +36,7 @@ final class SchemaInstallPathTest extends TestCase
     public static function provideInstallPaths(): iterable
     {
         yield 'SchemaBuilderEvent' => [
-            true,
+            false,
             [
                 DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => true],
                 DoctrineMigrationsSchemaHook::class => [DoctrineMigrationsSchemaHook::OPTION_INSTALL_SCHEMA => false],
@@ -44,7 +44,7 @@ final class SchemaInstallPathTest extends TestCase
         ];
 
         yield 'Doctrine Migrations' => [
-            false,
+            true,
             [
                 DatabaseSchemaHook::class => [DatabaseSchemaHook::OPTION_LOAD_SCHEMA => false],
                 DoctrineMigrationsSchemaHook::class => [DoctrineMigrationsSchemaHook::OPTION_INSTALL_SCHEMA => true],
