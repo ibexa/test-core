@@ -1,0 +1,20 @@
+<phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+        bootstrap="tests/integration/bootstrap.php"
+        failOnWarning="true"
+        colors="true">
+    <php>
+        <env name="KERNEL_CLASS" value="Ibexa\Tests\Integration\Test\Core\TestKernel" />
+        <env name="DATABASE_URL" value="sqlite://i@i/var/test.db" />
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/>
+    </php>
+    <testsuites>
+        <testsuite name="integration">
+            <directory>tests/integration</directory>
+        </testsuite>
+    </testsuites>
+    <listeners>
+        <listener class="Symfony\Bridge\PhpUnit\SymfonyTestsListener"/>
+    </listeners>
+</phpunit>

@@ -60,3 +60,89 @@ jobs:
 
       - name: Run test suite
         run: composer run-script --timeout=600 test
+
+      - name: Run integration test suite
+        run: composer run-script --timeout=600 test-integration
+
+  integration-tests-postgres:
+    name: Integration tests (postgres:14)
+    needs: tests
+    services:
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --tmpfs /var/lib/postgresql/data
+    runs-on: "ubuntu-26.04"
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ibexa/gh-workflows/actions/composer-install@main
+        with:
+          php-version: '8.4'
+          gh-client-id: ${{ secrets.AUTOMATION_CLIENT_ID }}
+          gh-client-secret: ${{ secrets.AUTOMATION_CLIENT_SECRET }}
+
+      - name: Setup problem matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Run integration test suite
+        run: composer run-script --timeout=600 test-integration
+        env:
+          DATABASE_URL: "pgsql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/testdb?server_version=10"
+
+  integration-tests-mysql:
+    name: Integration tests (${{ matrix.image }})
+    needs: tests
+    services:
+      mysql:
+        image: ${{ matrix.image }}
+        ports:
+          - 3306/tcp
+        env:
+          MYSQL_RANDOM_ROOT_PASSWORD: true
+          MYSQL_USER: mysql
+          MYSQL_PASSWORD: mysql
+          MYSQL_DATABASE: testdb
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          --tmpfs=/var/lib/mysql
+    runs-on: "ubuntu-26.04"
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - 'mysql:8.0'
+          - 'mariadb:10.11'
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ibexa/gh-workflows/actions/composer-install@main
+        with:
+          php-version: '8.4'
+          gh-client-id: ${{ secrets.AUTOMATION_CLIENT_ID }}
+          gh-client-secret: ${{ secrets.AUTOMATION_CLIENT_SECRET }}
+
+      - name: Setup problem matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Run integration test suite
+        run: composer run-script --timeout=600 test-integration
+        env:
+          DATABASE_URL: "mysql://mysql:mysql@127.0.0.1:${{ job.services.mysql.ports[3306] }}/testdb"
