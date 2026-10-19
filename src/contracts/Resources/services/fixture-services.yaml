@@ -24,5 +24,6 @@ services:
         public: true
         arguments:
             $connection: '@ibexa.persistence.connection'
+            $schemaAssetsFilterBypass: '@Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface'
 
 
