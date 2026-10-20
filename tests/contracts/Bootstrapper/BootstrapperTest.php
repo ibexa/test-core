@@ -22,6 +22,7 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\KernelProviderInterface;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
+use Ibexa\DoctrineSchema\Filter\SchemaAssetsFilterBypass;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -290,7 +291,7 @@ final class BootstrapperTest extends TestCase
      */
     private function createHooksExecutor(Connection $connection): HooksExecutor
     {
-        $fixtureImporter = new FixtureImporter($connection);
+        $fixtureImporter = new FixtureImporter($connection, new SchemaAssetsFilterBypass());
 
         return new HooksExecutor([
             DatabaseSchemaHook::class => new DatabaseSchemaHook(

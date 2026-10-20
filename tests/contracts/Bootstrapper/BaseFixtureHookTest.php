@@ -15,6 +15,7 @@ use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
+use Ibexa\DoctrineSchema\Filter\SchemaAssetsFilterBypass;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +29,7 @@ final class BaseFixtureHookTest extends TestCase
     {
         $hook = new BaseFixtureHook(
             new DefaultFixtureProvider(),
-            new FixtureImporter($this->createMock(Connection::class))
+            new FixtureImporter($this->createMock(Connection::class), new SchemaAssetsFilterBypass())
         );
 
         $options = $this->resolve($hook, []);
@@ -58,7 +59,7 @@ final class BaseFixtureHookTest extends TestCase
         $inserted = [];
         $connection = $this->connectionRecordingInserts($inserted);
 
-        $hook = new BaseFixtureHook($provider, new FixtureImporter($connection));
+        $hook = new BaseFixtureHook($provider, new FixtureImporter($connection, new SchemaAssetsFilterBypass()));
         $hook($this->resolve($hook, []));
 
         self::assertNotEmpty($expectedTables, 'Expected the baseline fixture to carry rows');
@@ -71,7 +72,7 @@ final class BaseFixtureHookTest extends TestCase
         $connection->expects(self::never())->method('insert');
         $connection->expects(self::never())->method('executeStatement');
 
-        $hook = new BaseFixtureHook(new DefaultFixtureProvider(), new FixtureImporter($connection));
+        $hook = new BaseFixtureHook(new DefaultFixtureProvider(), new FixtureImporter($connection, new SchemaAssetsFilterBypass()));
         $hook($this->resolve($hook, [BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE => false]));
     }
 
@@ -79,7 +80,7 @@ final class BaseFixtureHookTest extends TestCase
     {
         $hook = new BaseFixtureHook(
             new DefaultFixtureProvider(),
-            new FixtureImporter($this->createMock(Connection::class))
+            new FixtureImporter($this->createMock(Connection::class), new SchemaAssetsFilterBypass())
         );
 
         $this->expectException(UndefinedOptionsException::class);
