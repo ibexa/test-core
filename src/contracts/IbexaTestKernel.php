@@ -103,6 +103,7 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     protected const EXPOSED_SERVICES_BY_CLASS = [
         TransactionHandler::class,
         Connection::class,
+        SchemaBuilderInterface::class,
         Repository\Repository::class,
         Repository\ContentService::class,
         Repository\ContentTypeService::class,

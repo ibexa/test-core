@@ -9,6 +9,7 @@
         "php": ">=8.3",
         "doctrine/dbal": "^3.7.0",
         "ibexa/jms-translation-bundle": "^2.6.1",
+        "league/flysystem-memory": "^2.0.6 || ^3.0",
         "symfony/framework-bundle": "^7.4",
         "symfony/mime": "^7.4",
         "symfony/options-resolver": "^7.4",
@@ -51,12 +52,14 @@
         "fix-cs": "php-cs-fixer fix --config=.php-cs-fixer.php --show-progress=dots",
         "check-cs": "@fix-cs --dry-run",
         "test": "phpunit -c phpunit.xml.dist",
+        "test-integration": "phpunit -c phpunit.integration.xml",
         "phpstan": "phpstan analyse -c phpstan.neon"
     },
     "scripts-descriptions": {
         "fix-cs": "Automatically fixes code style in all files",
         "check-cs": "Run code style checker for all files",
         "test": "Run automatic tests",
+        "test-integration": "Run integration tests",
         "phpstan": "Run static code analysis"
     },
     "extra": {
