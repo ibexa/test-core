@@ -11,14 +11,12 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
-use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultSchemaFilesProvider;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HookInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeIndexAfterFixturesHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\PurgeSearchIndexHook;
-use Ibexa\Test\Core\Bootstrapper\FixtureKernelMethodProvider;
 use Ibexa\Test\Core\Bootstrapper\FixtureParameterProvider;
 use Ibexa\Test\Core\Bootstrapper\FixtureProviderChain;
 use Ibexa\Test\Core\Bootstrapper\HooksExecutor;
@@ -47,14 +45,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         // wrapper re-sorts entries alphabetically by key, destroying the priority order hooks rely on.
         ->arg('$hooks', tagged_iterator(HookInterface::TAG, 'id'));
 
-    $services->set(DefaultSchemaFilesProvider::class)
-        ->arg('$kernel', service('kernel'));
-
     $services->set(DefaultFixtureProvider::class);
-
-    $services->set(FixtureKernelMethodProvider::class)
-        ->arg('$kernel', service('kernel'))
-        ->tag(FixtureProviderInterface::TAG, ['priority' => 0]);
 
     $services->set(FixtureParameterProvider::class)
         ->arg('$fixtureFiles', '%ibexa.test.fixture_files%')
