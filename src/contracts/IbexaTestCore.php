@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace Ibexa\Contracts\Test\Core;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
@@ -23,14 +22,7 @@ use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture;
-use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
-use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
-use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
-use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
-use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Core\Repository\Values\User\UserReference;
-use Ibexa\Tests\Core\Repository\LegacySchemaImporter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -55,73 +47,6 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     ) {
         $this->container = $container;
         $this->kernel = $kernel;
-    }
-
-    /**
-     * @deprecated 4.6.33 The "IbexaTestCore::loadSchema()" method is deprecated, will be removed in
-     *   6.0. Installing the schema from a test case rules out running tests inside a transaction;
-     *   the Bootstrapper's {@see DatabaseSchemaHook} does it once per run instead, which is what
-     *   DAMADoctrineTestBundle needs.
-     */
-    public function loadSchema(): void
-    {
-        /** @var LegacySchemaImporter $schemaImporter */
-        $schemaImporter = $this->container->get(LegacySchemaImporter::class);
-        foreach ($this->getSchemaFiles() as $schemaFile) {
-            $schemaImporter->importSchema($schemaFile);
-        }
-    }
-
-    /**
-     * @deprecated 4.6.33 The "IbexaTestCore::getSchemaFiles()" method is deprecated, will be removed
-     *   in 6.0. It exists only to feed {@see self::loadSchema()}.
-     *
-     * @return iterable<string>
-     */
-    public function getSchemaFiles(): iterable
-    {
-        yield from $this->kernel->getSchemaFiles();
-    }
-
-    /**
-     * @deprecated 4.6.33 The "IbexaTestCore::loadFixtures()" method is deprecated, will be removed
-     *   in 6.0. Importing fixtures from a test case rules out running tests inside a transaction;
-     *   the Bootstrapper's {@see BaseFixtureHook} and {@see FixtureHook} do it once per run
-     *   instead, which is what DAMADoctrineTestBundle needs.
-     *
-     * @throws Exception
-     */
-    public function loadFixtures(?callable $postLoadFixtures = null): void
-    {
-        /** @var FixtureImporter $fixtureImporter */
-        $fixtureImporter = $this->container->get(FixtureImporter::class);
-        foreach ($this->getFixtures() as $fixture) {
-            $fixtureImporter->import($fixture);
-        }
-
-        if (null !== $postLoadFixtures) {
-            $postLoadFixtures();
-        }
-    }
-
-    /**
-     * @deprecated 4.6.33 The "IbexaTestCore::getFixtures()" method is deprecated, will be removed in
-     *   6.0. It exists only to feed {@see self::loadFixtures()}.
-     *
-     * @return iterable<Fixture>
-     */
-    public function getFixtures(): iterable
-    {
-        // IbexaTestKernel no longer contributes the baseline from getFixtures() - under the
-        // Bootstrapper it is imported by BaseFixtureHook instead - so this path, which
-        // never runs the hooks, has to supply it. Only for that kernel: any other
-        // IbexaTestKernelInterface implementation brings a baseline of its own (ibexa/core's
-        // same-named kernel, for one), and prepending this one would import two of them.
-        if ($this->kernel instanceof IbexaTestKernel) {
-            yield from (new DefaultFixtureProvider())->getFixtures();
-        }
-
-        yield from $this->kernel->getFixtures();
     }
 
     /**
