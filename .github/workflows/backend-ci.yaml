@@ -63,11 +63,11 @@ jobs:
         run: composer run-script --timeout=600 test-integration
 
   integration-tests-postgres:
-    name: Integration tests (postgres:14)
+    name: Integration tests (postgres:${{ matrix.postgres_version }})
     needs: tests
     services:
       postgres:
-        image: postgres:14
+        image: postgres:${{ matrix.postgres_version }}
         ports:
           - 5432
         env:
@@ -78,9 +78,16 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          --tmpfs /var/lib/postgresql/data
+          --tmpfs /var/lib/postgresql
     runs-on: "ubuntu-26.04"
     timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres_version:
+          - '14'
+          - '18'
 
     steps:
       - uses: actions/checkout@v7
@@ -97,7 +104,7 @@ jobs:
       - name: Run integration test suite
         run: composer run-script --timeout=600 test-integration
         env:
-          DATABASE_URL: "pgsql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/testdb?serverVersion=14"
+          DATABASE_URL: "pgsql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/testdb?serverVersion=${{ matrix.postgres_version }}"
 
   integration-tests-mysql:
     name: Integration tests (${{ matrix.image }})

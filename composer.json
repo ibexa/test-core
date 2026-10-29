@@ -9,7 +9,7 @@
         "php": ">=8.5",
         "doctrine/dbal": "^4.4",
         "ibexa/jms-translation-bundle": "^3.0",
-        "league/flysystem-memory": "^2.0.6 || ^3.0",
+        "league/flysystem-memory": "^3.0",
         "phpunit/phpunit": "^11.5",
         "symfony/framework-bundle": "^8.1",
         "symfony/mime": "^8.1",
