@@ -11,18 +11,17 @@ namespace Ibexa\Tests\Contracts\Test\Core\Bootstrapper;
 use Ibexa\Bundle\RepositoryInstaller\Bootstrapper\DoctrineMigrationsSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\SchemaInstallPath;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Bootstrapper\SchemaInstallPath
- */
+#[CoversClass(SchemaInstallPath::class)]
 final class SchemaInstallPathTest extends TestCase
 {
     /**
-     * @dataProvider provideInstallPaths
-     *
      * @param array<string, array<string, bool>> $expectedOptions
      */
+    #[DataProvider('provideInstallPaths')]
     public function testEnablesExactlyOneSchemaHook(
         bool $doctrineMigrationsEnabled,
         array $expectedOptions

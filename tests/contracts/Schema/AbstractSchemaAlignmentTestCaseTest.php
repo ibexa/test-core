@@ -10,31 +10,37 @@ namespace Ibexa\Tests\Contracts\Test\Core\Schema;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MariaDb1027Platform;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQL80Platform;
-use Doctrine\DBAL\Platforms\PostgreSQL100Platform;
-use Doctrine\DBAL\Platforms\SqlitePlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\ColumnEditor;
+use Doctrine\DBAL\Schema\Comparator;
+use Doctrine\DBAL\Schema\ComparatorConfig;
+use Doctrine\DBAL\Schema\Index;
+use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaEditor;
+use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Table;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Schema\TableEditor;
 use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Contracts\Test\Core\Schema\AbstractSchemaAlignmentTestCase;
 use Ibexa\DoctrineSchema\Importer\SchemaImporter;
 use Ibexa\Tests\Contracts\Test\Core\Schema\Stub\SchemaAlignmentTestCaseStub;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Ibexa\Contracts\Test\Core\Schema\AbstractSchemaAlignmentTestCase
- */
+#[CoversClass(AbstractSchemaAlignmentTestCase::class)]
 final class AbstractSchemaAlignmentTestCaseTest extends TestCase
 {
     private const SCHEMA_FILE = __DIR__ . '/../../integration/Schema/_fixtures/schema.yaml';
 
-    /**
-     * @dataProvider provideDatabasesReadBackDifferently
-     */
+    #[DataProvider('provideDatabasesReadBackDifferently')]
     public function testIgnoresWhatTheDatabaseReadsBackDifferently(
         AbstractPlatform $platform,
         Schema $database
@@ -42,15 +48,19 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         self::assertSame([], $this->getReportedStatements($database, self::importSchema(), $platform));
     }
 
-    /**
-     * @dataProvider provideDatabasesReadBackDifferently
-     */
+    #[DataProvider('provideDatabasesReadBackDifferently')]
     public function testReportsAMissingIndex(
         AbstractPlatform $platform,
         Schema $database
     ): void {
-        $declared = self::importSchema();
-        $declared->getTable('alignment_long_string')->addIndex(['title'], 'alignment_long_string_title');
+        $declared = self::importSchema()->edit()->modifyTableByUnquotedName(
+            'alignment_long_string',
+            static function (TableEditor $table): void {
+                $table->addIndex(
+                    Index::editor()->setUnquotedName('alignment_long_string_title')->setUnquotedColumnNames('title')
+                );
+            }
+        )->create();
 
         self::assertContains(
             'CREATE INDEX alignment_long_string_title ON alignment_long_string (title)',
@@ -60,29 +70,16 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
 
     public function testComparesPrefixLengthsWhereTheDatabaseStoresThem(): void
     {
-        $database = self::createDatabaseSchema(static function (Schema $schema): void {
-            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [100]);
+        $database = self::createDatabaseSchema(static function (SchemaEditor $schema): void {
+            self::setPrefixLength($schema, 100);
         });
 
         self::assertSame(
             [
-                'DROP INDEX alignment_prefix_length_name ON alignment_prefix_length',
-                'CREATE INDEX alignment_prefix_length_name ON alignment_prefix_length (name(191))',
+                'ALTER TABLE alignment_prefix_length DROP INDEX alignment_prefix_length_name, '
+                . 'ADD INDEX alignment_prefix_length_name (name(191))',
             ],
             $this->getReportedStatements($database, self::importSchema(), new MySQL80Platform())
-        );
-    }
-
-    public function testStillComparesAStringWithinThePlatformLimit(): void
-    {
-        $database = self::createDatabaseSchema(static function (Schema $schema): void {
-            self::readBackAsText($schema->getTable('alignment_long_string')->getColumn('title'));
-        });
-
-        self::assertContains(
-            'CREATE TABLE alignment_long_string (id INTEGER NOT NULL, description CLOB NOT NULL, '
-            . 'title VARCHAR(255) NOT NULL, PRIMARY KEY(id))',
-            $this->getReportedStatements($database, self::importSchema(), new SqlitePlatform())
         );
     }
 
@@ -93,25 +90,24 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      */
     public static function provideDatabasesReadBackDifferently(): iterable
     {
-        $mysql = static function (Schema $schema): void {
-            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [191]);
+        $mysql = static function (SchemaEditor $schema): void {
+            self::setPrefixLength($schema, 191);
         };
         yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mysql)];
-        yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mysql)];
+        yield 'MariaDB' => [new MariaDBPlatform(), self::createDatabaseSchema($mysql)];
 
-        $postgresql = static function (Schema $schema): void {
-            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [null]);
-            $schema->createSequence('alignment_composite_key_id_seq');
+        $postgresql = static function (SchemaEditor $schema): void {
+            self::setPrefixLength($schema, null);
+            $schema->addSequence(Sequence::editor()->setUnquotedName('alignment_composite_key_id_seq')->create());
         };
-        yield 'PostgreSQL' => [new PostgreSQL100Platform(), self::createDatabaseSchema($postgresql)];
+        yield 'PostgreSQL' => [new PostgreSQLPlatform(), self::createDatabaseSchema($postgresql)];
 
-        $sqlite = static function (Schema $schema): void {
-            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [null]);
-            $schema->getTable('alignment_composite_key')->getColumn('id')->setAutoincrement(false);
-            $schema->getTable('alignment_integer_key')->getColumn('id')->setAutoincrement(true);
-            self::readBackAsText($schema->getTable('alignment_long_string')->getColumn('description'));
+        $sqlite = static function (SchemaEditor $schema): void {
+            self::setPrefixLength($schema, null);
+            self::setIdAutoincrement($schema, 'alignment_composite_key', false);
+            self::setIdAutoincrement($schema, 'alignment_integer_key', true);
         };
-        yield 'SQLite' => [new SqlitePlatform(), self::createDatabaseSchema($sqlite)];
+        yield 'SQLite' => [new SQLitePlatform(), self::createDatabaseSchema($sqlite)];
     }
 
     /**
@@ -124,17 +120,20 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         Schema $declared,
         AbstractPlatform $platform
     ): array {
-        $schemaManager = self::createStub(AbstractSchemaManager::class);
-        $schemaManager->method('createSchema')->willReturn($database);
+        $schemaManager = $this->createStub(AbstractSchemaManager::class);
+        $schemaManager->method('introspectSchema')->willReturn($database);
+        $schemaManager->method('createComparator')->willReturnCallback(
+            static fn (ComparatorConfig $config): Comparator => new Comparator($platform, $config)
+        );
 
-        $connection = self::createStub(Connection::class);
-        $connection->method('getSchemaManager')->willReturn($schemaManager);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($schemaManager);
         $connection->method('getDatabasePlatform')->willReturn($platform);
 
-        $schemaBuilder = self::createStub(SchemaBuilderInterface::class);
+        $schemaBuilder = $this->createStub(SchemaBuilderInterface::class);
         $schemaBuilder->method('buildSchema')->willReturn($declared);
 
-        return (new SchemaAlignmentTestCaseStub($connection, $schemaBuilder))->getReportedStatements();
+        return SchemaAlignmentTestCaseStub::create($connection, $schemaBuilder)->getReportedStatements();
     }
 
     /**
@@ -149,40 +148,71 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      * The declared schema with what the database reads back differently, plus the Doctrine
      * Migrations versioning table.
      *
-     * @param callable(Schema): void $readBack
+     * @param callable(SchemaEditor): void $readBack
      */
     private static function createDatabaseSchema(callable $readBack): Schema
     {
-        $schema = self::importSchema();
+        $schema = self::importSchema()->edit();
         $readBack($schema);
 
-        $table = $schema->createTable('doctrine_migration_versions');
-        $table->addColumn('version', Types::STRING, ['length' => 191]);
-        $table->setPrimaryKey(['version']);
-
-        return $schema;
+        return $schema
+            ->addTable(
+                Table::editor()
+                    ->setUnquotedName('doctrine_migration_versions')
+                    ->setColumns(
+                        Column::editor()
+                            ->setUnquotedName('version')
+                            ->setTypeName(Types::STRING)
+                            ->setLength(191)
+                            ->create()
+                    )
+                    ->setPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedColumnNames('version')->create())
+                    ->create()
+            )
+            ->create();
     }
 
     /**
-     * @param array<int|null> $lengths
+     * Sets the prefix length the database reads alignment_prefix_length_name back with.
+     *
+     * @param positive-int|null $length
      */
-    private static function setIndexLengths(
-        Table $table,
-        string $indexName,
-        array $lengths
+    private static function setPrefixLength(
+        SchemaEditor $schema,
+        ?int $length
     ): void {
-        $index = $table->getIndex($indexName);
-        $table->dropIndex($indexName);
-        $table->addIndex(
-            $index->getColumns(),
-            $indexName,
-            $index->getFlags(),
-            ['lengths' => $lengths] + $index->getOptions()
+        $schema->modifyTableByUnquotedName(
+            'alignment_prefix_length',
+            static function (TableEditor $table) use ($length): void {
+                $table
+                    ->dropIndexByUnquotedName('alignment_prefix_length_name')
+                    ->addIndex(
+                        Index::editor()
+                            ->setUnquotedName('alignment_prefix_length_name')
+                            ->addUnquotedColumnName('name', $length)
+                    );
+            }
         );
     }
 
-    private static function readBackAsText(Column $column): void
-    {
-        $column->setType(Type::getType(Types::TEXT))->setLength(null);
+    /**
+     * @param non-empty-string $tableName
+     */
+    private static function setIdAutoincrement(
+        SchemaEditor $schema,
+        string $tableName,
+        bool $autoincrement
+    ): void {
+        $schema->modifyTableByUnquotedName(
+            $tableName,
+            static function (TableEditor $table) use ($autoincrement): void {
+                $table->modifyColumnByUnquotedName(
+                    'id',
+                    static function (ColumnEditor $column) use ($autoincrement): void {
+                        $column->setAutoincrement($autoincrement);
+                    }
+                );
+            }
+        );
     }
 }

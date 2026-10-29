@@ -11,16 +11,18 @@ namespace Ibexa\Contracts\Test\Core\Schema;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\SqlitePlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\ColumnEditor;
 use Doctrine\DBAL\Schema\Comparator;
+use Doctrine\DBAL\Schema\ComparatorConfig;
 use Doctrine\DBAL\Schema\Index;
+use Doctrine\DBAL\Schema\Index\IndexedColumn;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Schema\Table;
-use Doctrine\DBAL\Types\StringType;
-use Doctrine\DBAL\Types\Type;
-use Doctrine\DBAL\Types\Types;
+use Doctrine\DBAL\Schema\SchemaEditor;
+use Doctrine\DBAL\Schema\TableEditor;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
+use Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 
@@ -41,8 +43,9 @@ use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
  * }
  * ```
  *
- * Override {@see getDatabaseConnection()} or {@see getSchemaBuilder()} if the suite reaches its
- * database, or builds the schema it declares, another way.
+ * Override {@see getDatabaseConnection()}, {@see getSchemaBuilder()} or {@see getSchemaAssetsFilterBypass()}
+ * if the suite reaches its database, builds the schema it declares, or lifts the schema assets filter,
+ * another way.
  *
  * @experimental
  */
@@ -53,10 +56,15 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     final public function testDatabaseMatchesTheSchemaBuilderEventSchema(): void
     {
         $connection = $this->getDatabaseConnection();
+        $schemaManager = $connection->createSchemaManager();
 
         $statements = self::compareSchemas(
-            $connection->getSchemaManager()->createSchema(),
+            $this->getSchemaAssetsFilterBypass()->call(
+                $connection,
+                static fn (): Schema => $schemaManager->introspectSchema()
+            ),
             $this->getSchemaBuilder()->buildSchema(),
+            $schemaManager->createComparator((new ComparatorConfig())->withReportModifiedIndexes(false)),
             $connection->getDatabasePlatform()
         );
 
@@ -86,6 +94,16 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     }
 
     /**
+     * Lifts the schema assets filter while the database is read, as it hides the tables
+     * SchemaBuilderEvent declares from introspection. Override it when that isn't the bypass the
+     * kernel exposes.
+     */
+    protected function getSchemaAssetsFilterBypass(): SchemaAssetsFilterBypassInterface
+    {
+        return $this->getIbexaTestCore()->getServiceByClassName(SchemaAssetsFilterBypassInterface::class);
+    }
+
+    /**
      * Returns the statements that would turn the database schema into the declared one, leaving out
      * what DBAL can't read back from a database the way it was declared.
      *
@@ -94,36 +112,42 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     private static function compareSchemas(
         Schema $database,
         Schema $declared,
+        Comparator $comparator,
         AbstractPlatform $platform
     ): array {
-        $database = clone $database;
-        $declared = clone $declared;
         if ($database->hasTable(self::MIGRATIONS_TABLE)) {
-            $database->dropTable(self::MIGRATIONS_TABLE);
+            $database = $database->edit()->dropTableByUnquotedName(self::MIGRATIONS_TABLE)->create();
         }
 
-        self::normalize($database, $platform);
-        self::normalize($declared, $platform);
-
-        return (new Comparator())->compare($database, $declared)->toSql($platform);
+        return $platform->getAlterSchemaSQL($comparator->compareSchemas(
+            self::normalize($database, $platform),
+            self::normalize($declared, $platform)
+        ));
     }
 
     private static function normalize(
         Schema $schema,
         AbstractPlatform $platform
-    ): void {
-        self::ignoreSequences($schema);
-
+    ): Schema {
+        $tables = [];
         foreach ($schema->getTables() as $table) {
+            $tableEditor = $table->edit();
+
             foreach ($table->getIndexes() as $index) {
-                self::normalizeIndexPrefixLengths($table, $index, $platform);
+                self::normalizeIndexPrefixLengths($tableEditor, $index, $platform);
             }
 
             foreach ($table->getColumns() as $column) {
-                self::ignoreAutoincrementOnSqlite($column, $platform);
-                self::treatOverlongStringAsText($column, $platform);
+                self::ignoreAutoincrementOnSqlite($tableEditor, $column, $platform);
             }
+
+            $tables[] = $tableEditor->create();
         }
+
+        $schemaEditor = $schema->edit()->setTables(...$tables);
+        self::ignoreSequences($schemaEditor);
+
+        return $schemaEditor->create();
     }
 
     /**
@@ -133,34 +157,40 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      * by name isn't reliable either: PostgreSQL truncates the name to 63 characters. The columns'
      * autoincrement flag is still compared.
      */
-    private static function ignoreSequences(Schema $schema): void
+    private static function ignoreSequences(SchemaEditor $schema): void
     {
-        foreach ($schema->getSequences() as $sequence) {
-            $schema->dropSequence($sequence->getName());
-        }
+        $schema->setSequences();
     }
 
     /**
      * Only MySQL and MariaDB store index prefix lengths, so other platforms read them back as null.
-     * On those two, schema.yaml gives them as strings, and the database as integers.
+     * On those two, schema.yaml gives them as strings, and the database as integers, which the
+     * comparison tells apart until the index is rebuilt from its indexed columns.
      */
     private static function normalizeIndexPrefixLengths(
-        Table $table,
+        TableEditor $table,
         Index $index,
         AbstractPlatform $platform
     ): void {
-        if ($index->isPrimary() || !$index->hasOption('lengths')) {
+        $columns = $index->getIndexedColumns();
+        $hasLengths = array_filter($columns, static fn (IndexedColumn $column): bool => $column->getLength() !== null);
+        if ($hasLengths === []) {
             return;
         }
 
-        $lengths = $index->getOption('lengths');
-        assert(is_array($lengths));
+        $keepsLengths = $platform instanceof AbstractMySQLPlatform;
+        $normalizedColumns = array_map(
+            static fn (IndexedColumn $column): IndexedColumn => new IndexedColumn(
+                $column->getColumnName(),
+                $keepsLengths ? $column->getLength() : null
+            ),
+            $columns
+        );
 
-        $normalizedLengths = $platform instanceof AbstractMySQLPlatform
-            ? array_map(static fn ($length): ?int => $length === null ? null : (int)$length, $lengths)
-            : [];
-
-        self::replaceIndexOptions($table, $index, ['lengths' => $normalizedLengths] + $index->getOptions());
+        // An index can't be changed, so it's replaced by one with the normalized columns
+        $table
+            ->dropIndex($index->getObjectName())
+            ->addIndex($index->edit()->setColumns(...$normalizedColumns));
     }
 
     /**
@@ -170,52 +200,19 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
      * it. Leaving out composite keys alone would still report the latter.
      */
     private static function ignoreAutoincrementOnSqlite(
+        TableEditor $table,
         Column $column,
         AbstractPlatform $platform
     ): void {
-        if (!$platform instanceof SqlitePlatform) {
+        if (!$platform instanceof SQLitePlatform) {
             return;
         }
 
-        $column->setAutoincrement(false);
-    }
-
-    /**
-     * A string column longer than the platform's VARCHAR limit is created as a text one (a CLOB on
-     * SQLite, where the limit is 4000), and read back as such.
-     */
-    private static function treatOverlongStringAsText(
-        Column $column,
-        AbstractPlatform $platform
-    ): void {
-        $length = $column->getLength();
-        if (
-            !$column->getType() instanceof StringType
-            || $length === null
-            || $length <= $platform->getVarcharMaxLength()
-        ) {
-            return;
-        }
-
-        $column->setType(Type::getType(Types::TEXT));
-        $column->setLength(null);
-    }
-
-    /**
-     * An index's options can't be changed, so it's replaced by an index with the new ones.
-     *
-     * @param array<string, mixed> $options
-     */
-    private static function replaceIndexOptions(
-        Table $table,
-        Index $index,
-        array $options
-    ): void {
-        $table->dropIndex($index->getName());
-        if ($index->isUnique()) {
-            $table->addUniqueIndex($index->getColumns(), $index->getName(), $options);
-        } else {
-            $table->addIndex($index->getColumns(), $index->getName(), $index->getFlags(), $options);
-        }
+        $table->modifyColumn(
+            $column->getObjectName(),
+            static function (ColumnEditor $column): void {
+                $column->setAutoincrement(false);
+            }
+        );
     }
 }
