@@ -11,13 +11,16 @@ namespace Ibexa\Contracts\Test\Core\Schema;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Types\BlobType;
 use Doctrine\DBAL\Types\StringType;
+use Doctrine\DBAL\Types\TextType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
@@ -122,6 +125,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
             foreach ($table->getColumns() as $column) {
                 self::ignoreAutoincrementOnSqlite($column, $platform);
                 self::treatOverlongStringAsText($column, $platform);
+                self::ignoreTextDefaultOnMySql($column, $platform);
             }
         }
     }
@@ -199,6 +203,27 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
         $column->setType(Type::getType(Types::TEXT));
         $column->setLength(null);
+    }
+
+    /**
+     * MySQL can't store a default on a TEXT or BLOB column, so DBAL creates the column without the
+     * declared one, and the database reads it back without one. DBAL 2 left that difference out of
+     * the statements; DBAL 3 gives an ALTER that changes nothing. MariaDB stores the default.
+     */
+    private static function ignoreTextDefaultOnMySql(
+        Column $column,
+        AbstractPlatform $platform
+    ): void {
+        $type = $column->getType();
+        if (
+            !$platform instanceof AbstractMySQLPlatform
+            || $platform instanceof MariaDBPlatform
+            || !($type instanceof TextType || $type instanceof BlobType)
+        ) {
+            return;
+        }
+
+        $column->setDefault(null);
     }
 
     /**
