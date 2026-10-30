@@ -20,3 +20,8 @@ tables:
         fields:
             description: { type: string, nullable: false, length: 5000 }
             title: { type: string, nullable: false, length: 255 }
+    alignment_text_default:
+        id:
+            id: { type: integer, nullable: false, options: { autoincrement: true } }
+        fields:
+            body: { type: text, nullable: false, options: { default: '' } }
