@@ -1,6 +1,10 @@
 parameters:
     ibexa.io.dir.root: ''
     kernel.secret: 'foobar'
+    # Instead of core's native file handler, whose constructor calls ini_set(), which fails once
+    # PHPUnit has printed output. Doctrine's PdoSessionHandlerSchemaListener loads the handler
+    # whenever a test builds the ORM schema. Sessions are mocked anyway.
+    ibexa.session.handler_id: session.handler.native
 
 framework:
     test: true
