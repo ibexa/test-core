@@ -73,6 +73,19 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         );
     }
 
+    public function testComparesATextDefaultWhereTheDatabaseStoresIt(): void
+    {
+        $database = self::createDatabaseSchema(static function (Schema $schema): void {
+            self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [191]);
+            $schema->getTable('alignment_text_default')->getColumn('body')->setDefault(null);
+        });
+
+        self::assertSame(
+            ["ALTER TABLE alignment_text_default CHANGE body body LONGTEXT DEFAULT '' NOT NULL"],
+            $this->getReportedStatements($database, self::importSchema(), new MariaDb1027Platform())
+        );
+    }
+
     public function testStillComparesAStringWithinThePlatformLimit(): void
     {
         $database = self::createDatabaseSchema(static function (Schema $schema): void {
@@ -93,11 +106,16 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      */
     public static function provideDatabasesReadBackDifferently(): iterable
     {
-        $mysql = static function (Schema $schema): void {
+        $mariadb = static function (Schema $schema): void {
             self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [191]);
         };
+        yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mariadb)];
+
+        $mysql = static function (Schema $schema) use ($mariadb): void {
+            $mariadb($schema);
+            $schema->getTable('alignment_text_default')->getColumn('body')->setDefault(null);
+        };
         yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mysql)];
-        yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mysql)];
 
         $postgresql = static function (Schema $schema): void {
             self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [null]);

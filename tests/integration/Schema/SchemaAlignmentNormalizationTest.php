@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Integration\Test\Core\Schema;
 
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Sequence;
@@ -54,12 +55,14 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
         $statements = (new Comparator())->compare($database, new Schema([$declared->getTable($tableName)]))
             ->toSql($platform);
 
+        // getName() calls MariaDB "mysql" too
+        $platformName = $platform instanceof MariaDBPlatform ? 'mariadb' : $platform->getName();
         self::assertSame(
-            in_array($platform->getName(), $platformsReadingItBackDifferently, true),
+            in_array($platformName, $platformsReadingItBackDifferently, true),
             $statements !== [],
             sprintf(
                 "Statements the plain comparison gives on %s:\n%s",
-                $platform->getName(),
+                $platformName,
                 implode(";\n", $statements)
             )
         );
@@ -72,7 +75,8 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
     {
         yield 'autoincrement on a composite primary key' => ['alignment_composite_key', ['postgresql', 'sqlite']];
         yield 'INTEGER primary key without autoincrement' => ['alignment_integer_key', ['sqlite']];
-        yield 'index prefix length' => ['alignment_prefix_length', ['mysql', 'postgresql', 'sqlite']];
+        yield 'index prefix length' => ['alignment_prefix_length', ['mysql', 'mariadb', 'postgresql', 'sqlite']];
         yield 'string longer than VARCHAR allows' => ['alignment_long_string', ['sqlite']];
+        yield 'default on a text column' => ['alignment_text_default', ['mysql']];
     }
 }
