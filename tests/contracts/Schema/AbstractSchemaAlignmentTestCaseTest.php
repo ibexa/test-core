@@ -110,8 +110,23 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         );
     }
 
+    public function testStillComparesATypeCommentOutsideSqlite(): void
+    {
+        $database = self::createDatabaseSchema(static function (SchemaEditor $schema): void {
+            self::setPrefixLength($schema, null);
+            self::setRateDefault($schema, '0');
+            self::setBodyComment($schema, '(DC2Type:json)');
+        });
+
+        self::assertSame(
+            ["COMMENT ON COLUMN alignment_text_default.body IS ''"],
+            $this->getReportedStatements($database, self::importSchema(), new PostgreSQLPlatform())
+        );
+    }
+
     /**
-     * Each database schema is the declared one as that platform reads it back.
+     * Each database schema is the declared one as that platform reads it back. On SQLite, the table
+     * also carries the type comment a baseline created it with.
      *
      * @return iterable<string, array{AbstractPlatform, Schema}>
      */
@@ -141,6 +156,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
             self::setRateDefault($schema, '0');
             self::setIdAutoincrement($schema, 'alignment_composite_key', false);
             self::setIdAutoincrement($schema, 'alignment_integer_key', true);
+            self::setBodyComment($schema, '(DC2Type:json)');
         };
         yield 'SQLite' => [new SQLitePlatform(), self::createDatabaseSchema($sqlite)];
     }
@@ -263,6 +279,26 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
                     'body',
                     static function (ColumnEditor $column): void {
                         $column->setDefaultValue(null);
+                    }
+                );
+            }
+        );
+    }
+
+    /**
+     * Sets the comment the database reads alignment_text_default.body back with.
+     */
+    private static function setBodyComment(
+        SchemaEditor $schema,
+        string $comment
+    ): void {
+        $schema->modifyTableByUnquotedName(
+            'alignment_text_default',
+            static function (TableEditor $table) use ($comment): void {
+                $table->modifyColumnByUnquotedName(
+                    'body',
+                    static function (ColumnEditor $column) use ($comment): void {
+                        $column->setComment($comment);
                     }
                 );
             }

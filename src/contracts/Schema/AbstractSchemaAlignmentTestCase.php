@@ -140,6 +140,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
             foreach ($table->getColumns() as $column) {
                 self::ignoreAutoincrementOnSqlite($tableEditor, $column, $platform);
+                self::ignoreTypeCommentsOnSqlite($tableEditor, $column, $platform);
                 self::compareDecimalDefaultsAsNumbers($tableEditor, $column);
             }
 
@@ -214,6 +215,35 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
             $column->getObjectName(),
             static function (ColumnEditor $column): void {
                 $column->setAutoincrement(false);
+            }
+        );
+    }
+
+    /**
+     * DBAL 2 and 3 marked some columns' type with a (DC2Type:…) comment, which SQLite baselines keep
+     * as an SQL comment in the table's CREATE TABLE statement. DBAL 4 no longer writes these hints,
+     * but reads them back as the column's comment. Other platforms store real comments, so a hint
+     * left there is still reported.
+     */
+    private static function ignoreTypeCommentsOnSqlite(
+        TableEditor $table,
+        Column $column,
+        AbstractPlatform $platform
+    ): void {
+        if (!$platform instanceof SQLitePlatform) {
+            return;
+        }
+
+        $comment = preg_replace('/\(DC2Type:[^)]+\)/', '', $column->getComment());
+        assert(is_string($comment));
+        if ($comment === $column->getComment()) {
+            return;
+        }
+
+        $table->modifyColumn(
+            $column->getObjectName(),
+            static function (ColumnEditor $column) use ($comment): void {
+                $column->setComment($comment);
             }
         );
     }
