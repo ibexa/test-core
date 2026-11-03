@@ -96,6 +96,20 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         );
     }
 
+    public function testStillComparesADifferentDecimalDefault(): void
+    {
+        $database = self::createDatabaseSchema(static function (SchemaEditor $schema): void {
+            self::setPrefixLength($schema, 191);
+            self::dropBodyDefault($schema);
+            self::setRateDefault($schema, '0.50');
+        });
+
+        self::assertSame(
+            ['ALTER TABLE alignment_decimal_default CHANGE rate rate NUMERIC(5, 2) DEFAULT 0 NOT NULL'],
+            $this->getReportedStatements($database, self::importSchema(), new MySQL80Platform())
+        );
+    }
+
     /**
      * Each database schema is the declared one as that platform reads it back.
      *
@@ -105,6 +119,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     {
         $mariadb = static function (SchemaEditor $schema): void {
             self::setPrefixLength($schema, 191);
+            self::setRateDefault($schema, '0.00');
         };
         yield 'MariaDB' => [new MariaDBPlatform(), self::createDatabaseSchema($mariadb)];
 
@@ -116,12 +131,14 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
 
         $postgresql = static function (SchemaEditor $schema): void {
             self::setPrefixLength($schema, null);
+            self::setRateDefault($schema, '0');
             $schema->addSequence(Sequence::editor()->setUnquotedName('alignment_composite_key_id_seq')->create());
         };
         yield 'PostgreSQL' => [new PostgreSQLPlatform(), self::createDatabaseSchema($postgresql)];
 
         $sqlite = static function (SchemaEditor $schema): void {
             self::setPrefixLength($schema, null);
+            self::setRateDefault($schema, '0');
             self::setIdAutoincrement($schema, 'alignment_composite_key', false);
             self::setIdAutoincrement($schema, 'alignment_integer_key', true);
         };
@@ -246,6 +263,26 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
                     'body',
                     static function (ColumnEditor $column): void {
                         $column->setDefaultValue(null);
+                    }
+                );
+            }
+        );
+    }
+
+    /**
+     * Sets the default the database reads alignment_decimal_default.rate back with.
+     */
+    private static function setRateDefault(
+        SchemaEditor $schema,
+        string $default
+    ): void {
+        $schema->modifyTableByUnquotedName(
+            'alignment_decimal_default',
+            static function (TableEditor $table) use ($default): void {
+                $table->modifyColumnByUnquotedName(
+                    'rate',
+                    static function (ColumnEditor $column) use ($default): void {
+                        $column->setDefaultValue($default);
                     }
                 );
             }

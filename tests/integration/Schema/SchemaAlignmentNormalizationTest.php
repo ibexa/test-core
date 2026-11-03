@@ -98,6 +98,7 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
         yield 'index prefix length' => ['alignment_prefix_length', ['mysql', 'mariadb', 'postgresql', 'sqlite']];
         yield 'string longer than VARCHAR allows' => ['alignment_long_string', []];
         yield 'default on a text column' => ['alignment_text_default', []];
+        yield 'default on a decimal column' => ['alignment_decimal_default', ['mysql', 'mariadb', 'postgresql', 'sqlite']];
     }
 
     private static function getPlatformName(AbstractPlatform $platform): string

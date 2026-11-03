@@ -21,6 +21,7 @@ use Doctrine\DBAL\Schema\Index\IndexedColumn;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaEditor;
 use Doctrine\DBAL\Schema\TableEditor;
+use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
@@ -139,6 +140,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
             foreach ($table->getColumns() as $column) {
                 self::ignoreAutoincrementOnSqlite($tableEditor, $column, $platform);
+                self::compareDecimalDefaultsAsNumbers($tableEditor, $column);
             }
 
             $tables[] = $tableEditor->create();
@@ -212,6 +214,29 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
             $column->getObjectName(),
             static function (ColumnEditor $column): void {
                 $column->setAutoincrement(false);
+            }
+        );
+    }
+
+    /**
+     * schema.yaml gives a decimal column's default as a number, while every database reads it back
+     * as a string: '0.00' on MySQL and MariaDB, which pad it to the column's scale, '0' elsewhere.
+     * DBAL compares columns by their declaration, where a number isn't quoted and a string is, so
+     * both are compared as a float, the way DBAL already declares a float column's default.
+     */
+    private static function compareDecimalDefaultsAsNumbers(
+        TableEditor $table,
+        Column $column
+    ): void {
+        $default = $column->getDefault();
+        if ($column->getTypeName() !== Types::DECIMAL || !is_numeric($default)) {
+            return;
+        }
+
+        $table->modifyColumn(
+            $column->getObjectName(),
+            static function (ColumnEditor $column) use ($default): void {
+                $column->setDefaultValue((float) $default);
             }
         );
     }

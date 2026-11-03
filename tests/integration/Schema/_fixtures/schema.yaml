@@ -25,3 +25,8 @@ tables:
             id: { type: integer, nullable: false, options: { autoincrement: true } }
         fields:
             body: { type: text, nullable: false, options: { default: '' } }
+    alignment_decimal_default:
+        id:
+            id: { type: integer, nullable: false, options: { autoincrement: true } }
+        fields:
+            rate: { type: decimal, nullable: false, options: { precision: 5, scale: 2, default: 0 } }
