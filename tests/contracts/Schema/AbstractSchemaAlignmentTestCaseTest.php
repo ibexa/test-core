@@ -83,6 +83,19 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
         );
     }
 
+    public function testComparesATextDefaultWhereTheDatabaseStoresIt(): void
+    {
+        $database = self::createDatabaseSchema(static function (SchemaEditor $schema): void {
+            self::setPrefixLength($schema, 191);
+            self::dropBodyDefault($schema);
+        });
+
+        self::assertSame(
+            ["ALTER TABLE alignment_text_default CHANGE body body LONGTEXT DEFAULT '' NOT NULL"],
+            $this->getReportedStatements($database, self::importSchema(), new MariaDBPlatform())
+        );
+    }
+
     /**
      * Each database schema is the declared one as that platform reads it back.
      *
@@ -90,11 +103,16 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
      */
     public static function provideDatabasesReadBackDifferently(): iterable
     {
-        $mysql = static function (SchemaEditor $schema): void {
+        $mariadb = static function (SchemaEditor $schema): void {
             self::setPrefixLength($schema, 191);
         };
+        yield 'MariaDB' => [new MariaDBPlatform(), self::createDatabaseSchema($mariadb)];
+
+        $mysql = static function (SchemaEditor $schema) use ($mariadb): void {
+            $mariadb($schema);
+            self::dropBodyDefault($schema);
+        };
         yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mysql)];
-        yield 'MariaDB' => [new MariaDBPlatform(), self::createDatabaseSchema($mysql)];
 
         $postgresql = static function (SchemaEditor $schema): void {
             self::setPrefixLength($schema, null);
@@ -210,6 +228,24 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
                     'id',
                     static function (ColumnEditor $column) use ($autoincrement): void {
                         $column->setAutoincrement($autoincrement);
+                    }
+                );
+            }
+        );
+    }
+
+    /**
+     * Drops the default MySQL can't store on alignment_text_default.body.
+     */
+    private static function dropBodyDefault(SchemaEditor $schema): void
+    {
+        $schema->modifyTableByUnquotedName(
+            'alignment_text_default',
+            static function (TableEditor $table): void {
+                $table->modifyColumnByUnquotedName(
+                    'body',
+                    static function (ColumnEditor $column): void {
+                        $column->setDefaultValue(null);
                     }
                 );
             }
