@@ -135,7 +135,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
             $tableEditor = $table->edit();
 
             foreach ($table->getIndexes() as $index) {
-                self::normalizeIndexPrefixLengths($tableEditor, $index, $platform);
+                self::ignoreIndexPrefixLengthsOutsideMysql($tableEditor, $index, $platform);
             }
 
             foreach ($table->getColumns() as $column) {
@@ -167,33 +167,25 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
     /**
      * Only MySQL and MariaDB store index prefix lengths, so other platforms read them back as null.
-     * On those two, schema.yaml gives them as strings, and the database as integers, which the
-     * comparison tells apart until the index is rebuilt from its indexed columns.
      */
-    private static function normalizeIndexPrefixLengths(
+    private static function ignoreIndexPrefixLengthsOutsideMysql(
         TableEditor $table,
         Index $index,
         AbstractPlatform $platform
     ): void {
         $columns = $index->getIndexedColumns();
         $hasLengths = array_filter($columns, static fn (IndexedColumn $column): bool => $column->getLength() !== null);
-        if ($hasLengths === []) {
+        if ($platform instanceof AbstractMySQLPlatform || $hasLengths === []) {
             return;
         }
 
-        $keepsLengths = $platform instanceof AbstractMySQLPlatform;
-        $normalizedColumns = array_map(
-            static fn (IndexedColumn $column): IndexedColumn => new IndexedColumn(
-                $column->getColumnName(),
-                $keepsLengths ? $column->getLength() : null
-            ),
-            $columns
-        );
-
-        // An index can't be changed, so it's replaced by one with the normalized columns
+        // An index can't be changed, so it's replaced by one with the same columns, without lengths
         $table
             ->dropIndex($index->getObjectName())
-            ->addIndex($index->edit()->setColumns(...$normalizedColumns));
+            ->addIndex($index->edit()->setColumns(...array_map(
+                static fn (IndexedColumn $column): IndexedColumn => new IndexedColumn($column->getColumnName(), null),
+                $columns
+            )));
     }
 
     /**
