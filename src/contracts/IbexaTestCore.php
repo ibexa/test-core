@@ -36,7 +36,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * @experimental
  *
- * @internal use IbexaTestCoreInterface instead.
+ * Type-hint against IbexaTestCoreInterface instead. Only getAliasServiceId() is meant to be called on this class directly.
  *
  * @see IbexaTestCoreInterface
  */
@@ -49,12 +49,25 @@ final class IbexaTestCore implements IbexaTestCoreInterface
 
     private IbexaTestKernelInterface $kernel;
 
+    /**
+     * @internal use IbexaKernelTestCase::getIbexaTestCore() instead.
+     */
     public function __construct(
         ContainerInterface $container,
         IbexaTestKernelInterface $kernel
     ) {
         $this->container = $container;
         $this->kernel = $kernel;
+    }
+
+    /**
+     * Used by IbexaTestKernel to register service aliases, and by getServiceByClassName() to look them up.
+     *
+     * @return string a service ID that service aliases will be registered as
+     */
+    public static function getAliasServiceId(string $id): string
+    {
+        return 'test.' . $id;
     }
 
     /**
@@ -150,7 +163,7 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     ): string {
         $id = $id ?? $className;
 
-        return $prefix ? $this->kernel::getAliasServiceId($id) : $id;
+        return $prefix ? self::getAliasServiceId($id) : $id;
     }
 
     public function getDoctrineConnection(): Connection
