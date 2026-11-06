@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace Ibexa\Contracts\Test\Core;
 
-use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -20,22 +19,6 @@ abstract class IbexaKernelTestCase extends KernelTestCase
 
     protected function getIbexaTestCore(): IbexaTestCoreInterface
     {
-        if (!self::$booted) {
-            self::bootKernel();
-        }
-
-        if (!isset($this->ibexaCore)) {
-            if (!self::$kernel instanceof IbexaTestKernelInterface) {
-                throw new \LogicException(sprintf(
-                    '%s requires %s as an argument, but received %s. Ensure that KERNEL_CLASS env variable is set properly.',
-                    IbexaTestCore::class,
-                    IbexaTestKernelInterface::class,
-                    get_debug_type(self::$kernel),
-                ));
-            }
-            $this->ibexaCore = new IbexaTestCore(self::getContainer(), self::$kernel);
-        }
-
-        return $this->ibexaCore;
+        return $this->ibexaCore ??= new IbexaTestCore(self::getContainer());
     }
 }

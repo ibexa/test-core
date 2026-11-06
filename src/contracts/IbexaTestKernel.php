@@ -123,11 +123,13 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     protected const EXPOSED_SERVICES_BY_ID = [];
 
     /**
+     * @deprecated 6.0.0 will be removed in 7.0.0. Use {@see IbexaTestCore::getAliasServiceId()} instead.
+     *
      * @return string a service ID that service aliases will be registered as
      */
     public static function getAliasServiceId(string $id): string
     {
-        return 'test.' . $id;
+        return IbexaTestCore::getAliasServiceId($id);
     }
 
     public function getCacheDir(): string
@@ -269,12 +271,12 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
     private static function createPublicAliasesForServicesUnderTest(ContainerBuilder $container): void
     {
         foreach (static::getExposedServicesByClass() as $className) {
-            $container->setAlias(static::getAliasServiceId($className), $className)
+            $container->setAlias(IbexaTestCore::getAliasServiceId($className), $className)
                 ->setPublic(true);
         }
 
         foreach (static::getExposedServicesById() as $id => $className) {
-            $container->setAlias(static::getAliasServiceId($id), $id)
+            $container->setAlias(IbexaTestCore::getAliasServiceId($id), $id)
                 ->setPublic(true);
         }
     }
