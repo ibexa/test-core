@@ -14,6 +14,7 @@ use Ibexa\Contracts\Core\Test\Persistence\Fixture;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureProviderInterface;
+use Ibexa\DoctrineSchema\Filter\SchemaAssetsFilterBypass;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -43,7 +44,7 @@ final class FixtureHookTest extends TestCase
         $platform->method('supportsSequences')->willReturn(false);
         $connection->method('getDatabasePlatform')->willReturn($platform);
 
-        $hook = new FixtureHook($provider, new FixtureImporter($connection));
+        $hook = new FixtureHook($provider, new FixtureImporter($connection, new SchemaAssetsFilterBypass()));
         $hook($this->resolve($hook, []));
     }
 
@@ -52,7 +53,7 @@ final class FixtureHookTest extends TestCase
         $provider = $this->createMock(FixtureProviderInterface::class);
         $provider->expects(self::never())->method('getFixtures');
 
-        $hook = new FixtureHook($provider, new FixtureImporter($this->createStub(Connection::class)));
+        $hook = new FixtureHook($provider, new FixtureImporter($this->createStub(Connection::class), new SchemaAssetsFilterBypass()));
         $hook($this->resolve($hook, [FixtureHook::OPTION_LOAD_FIXTURES => false]));
     }
 
@@ -79,7 +80,7 @@ final class FixtureHookTest extends TestCase
         $provider = $this->createMock(FixtureProviderInterface::class);
         $provider->method('getFixtures')->willReturn($fixtures);
 
-        $fixtureImporter = new FixtureImporter($this->createStub(Connection::class));
+        $fixtureImporter = new FixtureImporter($this->createStub(Connection::class), new SchemaAssetsFilterBypass());
 
         return new FixtureHook($provider, $fixtureImporter);
     }
