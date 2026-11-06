@@ -10,7 +10,6 @@ namespace Ibexa\Tests\Contracts\Test\Core\Schema\Stub;
 
 use Doctrine\DBAL\Connection;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
-use Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface;
 use Ibexa\Contracts\Test\Core\Schema\AbstractSchemaAlignmentTestCase;
 use PHPUnit\Framework\ExpectationFailedException;
 
@@ -65,18 +64,5 @@ final class SchemaAlignmentTestCaseStub extends AbstractSchemaAlignmentTestCase
     protected function getSchemaBuilder(): SchemaBuilderInterface
     {
         return $this->schemaBuilder;
-    }
-
-    protected function getSchemaAssetsFilterBypass(): SchemaAssetsFilterBypassInterface
-    {
-        // The stubbed connection has no schema assets filter to lift
-        return new class() implements SchemaAssetsFilterBypassInterface {
-            public function call(
-                Connection $connection,
-                callable $callback
-            ): mixed {
-                return $callback();
-            }
-        };
     }
 }
