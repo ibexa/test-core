@@ -17,7 +17,6 @@ use Doctrine\DBAL\Schema\ComparatorConfig;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Sequence;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
-use Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -49,26 +48,20 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
         $schemaManager = $connection->createSchemaManager();
 
         $declared = $ibexaTestCore->getServiceByClassName(SchemaBuilderInterface::class)->buildSchema();
-        $database = $ibexaTestCore->getServiceByClassName(SchemaAssetsFilterBypassInterface::class)->call(
-            $connection,
-            // Read the way AbstractSchemaAlignmentTestCase does: on SQLite, introspectTableByUnquotedName()
-            // doesn't report a single-column INTEGER primary key as autoincrement, but introspectSchema() does
-            static function () use ($schemaManager, $tableName): Schema {
-                $database = $schemaManager->introspectSchema();
-                $sequences = array_filter(
-                    $database->getSequences(),
-                    static fn (Sequence $sequence): bool => str_starts_with(
-                        $sequence->getObjectName()->getUnqualifiedName()->getValue(),
-                        $tableName . '_'
-                    )
-                );
-
-                return Schema::editor()
-                    ->setTables($database->getTable($tableName))
-                    ->setSequences(...$sequences)
-                    ->create();
-            }
+        // Read the way AbstractSchemaAlignmentTestCase does: on SQLite, introspectTableByUnquotedName()
+        // doesn't report a single-column INTEGER primary key as autoincrement, but introspectSchema() does
+        $introspected = $schemaManager->introspectSchema();
+        $sequences = array_filter(
+            $introspected->getSequences(),
+            static fn (Sequence $sequence): bool => str_starts_with(
+                $sequence->getObjectName()->getUnqualifiedName()->getValue(),
+                $tableName . '_'
+            )
         );
+        $database = Schema::editor()
+            ->setTables($introspected->getTable($tableName))
+            ->setSequences(...$sequences)
+            ->create();
 
         $diff = $schemaManager
             ->createComparator((new ComparatorConfig())->withReportModifiedIndexes(false))
