@@ -36,7 +36,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * @experimental
  *
- * Type-hint against IbexaTestCoreInterface instead. Only getAliasServiceId() is meant to be called on this class directly.
+ * Type-hint against IbexaTestCoreInterface instead.
  *
  * @see IbexaTestCoreInterface
  */
@@ -49,9 +49,6 @@ final class IbexaTestCore implements IbexaTestCoreInterface
 
     private IbexaTestKernelInterface $kernel;
 
-    /**
-     * @internal use IbexaKernelTestCase::getIbexaTestCore() instead.
-     */
     public function __construct(
         ContainerInterface $container,
         IbexaTestKernelInterface $kernel
