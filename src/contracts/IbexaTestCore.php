@@ -21,32 +21,33 @@ use Ibexa\Contracts\Core\Repository\SearchService;
 use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
-use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Core\Repository\Values\User\UserReference;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @experimental
  *
- * @internal use IbexaTestCoreInterface instead.
+ * Type-hint against IbexaTestCoreInterface instead.
  *
  * @see IbexaTestCoreInterface
  */
 final class IbexaTestCore implements IbexaTestCoreInterface
 {
-    public const ANONYMOUS_USER_ID = 10;
-    public const ADMIN_USER_ID = 14;
-
-    private ContainerInterface $container;
-
-    private IbexaTestKernelInterface $kernel;
+    public const int ANONYMOUS_USER_ID = 10;
+    public const int ADMIN_USER_ID = 14;
 
     public function __construct(
-        ContainerInterface $container,
-        IbexaTestKernelInterface $kernel
-    ) {
-        $this->container = $container;
-        $this->kernel = $kernel;
+        private readonly ContainerInterface $container
+    ) {}
+
+    /**
+     * Used by IbexaTestKernel to register service aliases, and by getServiceByClassName() to look them up.
+     *
+     * @return string a service ID that service aliases will be registered as
+     */
+    public static function getAliasServiceId(string $id): string
+    {
+        return 'test.' . $id;
     }
 
     /**
@@ -75,7 +76,7 @@ final class IbexaTestCore implements IbexaTestCoreInterface
     ): string {
         $id = $id ?? $className;
 
-        return $prefix ? $this->kernel::getAliasServiceId($id) : $id;
+        return $prefix ? self::getAliasServiceId($id) : $id;
     }
 
     public function getDoctrineConnection(): Connection
