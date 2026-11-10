@@ -18,7 +18,6 @@ use Ibexa\Bundle\RepositoryInstaller\IbexaRepositoryInstallerBundle;
 use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
-use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
 use Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
@@ -91,7 +90,7 @@ use Symfony\Component\HttpKernel\Kernel;
  * the IbexaTestKernel::EXPOSED_SERVICES_BY_CLASS and IbexaTestKernel::EXPOSED_SERVICES_BY_ID constants
  * in the extending class, without changing the methods above.
  */
-class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
+class IbexaTestKernel extends Kernel
 {
     /**
      * @var iterable<class-string>
