@@ -95,7 +95,7 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
     {
         yield 'autoincrement on a composite primary key' => ['alignment_composite_key', ['sqlite']];
         yield 'INTEGER primary key without autoincrement' => ['alignment_integer_key', ['sqlite']];
-        yield 'index prefix length' => ['alignment_prefix_length', ['mysql', 'mariadb', 'postgresql', 'sqlite']];
+        yield 'index prefix length' => ['alignment_prefix_length', ['postgresql', 'sqlite']];
         yield 'string longer than VARCHAR allows' => ['alignment_long_string', []];
         yield 'default on a text column' => ['alignment_text_default', []];
         yield 'default on a decimal column' => ['alignment_decimal_default', ['mysql', 'mariadb', 'postgresql', 'sqlite']];
