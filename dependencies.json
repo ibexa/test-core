@@ -1,0 +1,11 @@
+{
+    "recipesEndpoint": "",
+    "packages": [
+        {
+            "requirement": "dev-claude/ibexa-language-bitmask-migration-41a862 as 6.0.x-dev",
+            "repositoryUrl": "https://github.com/ibexa/core.git",
+            "package": "ibexa/core",
+            "shouldBeAddedAsVCS": false
+        }
+    ]
+}
