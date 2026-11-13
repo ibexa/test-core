@@ -122,16 +122,6 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
      */
     protected const EXPOSED_SERVICES_BY_ID = [];
 
-    /**
-     * @deprecated 5.0.12 will be removed in 6.0.0. Use {@see IbexaTestCore::getAliasServiceId()} instead.
-     *
-     * @return string a service ID that service aliases will be registered as
-     */
-    public static function getAliasServiceId(string $id): string
-    {
-        return IbexaTestCore::getAliasServiceId($id);
-    }
-
     public function getCacheDir(): string
     {
         return sys_get_temp_dir() . '/ibexa-test-kernel/' . md5(serialize(getenv())) . md5(static::class);
