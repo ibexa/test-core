@@ -23,7 +23,6 @@ use Doctrine\DBAL\Schema\SchemaEditor;
 use Doctrine\DBAL\Schema\TableEditor;
 use Doctrine\DBAL\Types\Types;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
-use Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
 
@@ -44,9 +43,8 @@ use Ibexa\Contracts\Test\Core\IbexaKernelTestCase;
  * }
  * ```
  *
- * Override {@see getDatabaseConnection()}, {@see getSchemaBuilder()} or {@see getSchemaAssetsFilterBypass()}
- * if the suite reaches its database, builds the schema it declares, or lifts the schema assets filter,
- * another way.
+ * Override {@see getDatabaseConnection()} or {@see getSchemaBuilder()}
+ * if the suite reaches its database, or builds the schema it declares, another way.
  *
  * @experimental
  */
@@ -60,10 +58,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
         $schemaManager = $connection->createSchemaManager();
 
         $statements = self::compareSchemas(
-            $this->getSchemaAssetsFilterBypass()->call(
-                $connection,
-                static fn (): Schema => $schemaManager->introspectSchema()
-            ),
+            $schemaManager->introspectSchema(),
             $this->getSchemaBuilder()->buildSchema(),
             $schemaManager->createComparator((new ComparatorConfig())->withReportModifiedIndexes(false)),
             $connection->getDatabasePlatform()
@@ -92,16 +87,6 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
     protected function getSchemaBuilder(): SchemaBuilderInterface
     {
         return $this->getIbexaTestCore()->getServiceByClassName(SchemaBuilderInterface::class);
-    }
-
-    /**
-     * Lifts the schema assets filter while the database is read, as it hides the tables
-     * SchemaBuilderEvent declares from introspection. Override it when that isn't the bypass the
-     * kernel exposes.
-     */
-    protected function getSchemaAssetsFilterBypass(): SchemaAssetsFilterBypassInterface
-    {
-        return $this->getIbexaTestCore()->getServiceByClassName(SchemaAssetsFilterBypassInterface::class);
     }
 
     /**

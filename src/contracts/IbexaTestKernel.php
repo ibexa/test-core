@@ -20,7 +20,6 @@ use Ibexa\Contracts\Core\Persistence\TransactionHandler;
 use Ibexa\Contracts\Core\Repository;
 use Ibexa\Contracts\Core\Test\IbexaTestKernelInterface;
 use Ibexa\Contracts\DoctrineSchema\Builder\SchemaBuilderInterface;
-use Ibexa\Contracts\DoctrineSchema\SchemaAssetsFilterBypassInterface;
 use Ibexa\Contracts\Test\Core\Bootstrapper\Bootstrapper;
 use Ibexa\Contracts\Test\Core\Bootstrapper\HooksExecutorInterface;
 use Ibexa\Tests\Integration\Core\IO\FlysystemTestAdapter;
@@ -100,7 +99,6 @@ class IbexaTestKernel extends Kernel implements IbexaTestKernelInterface
         TransactionHandler::class,
         Connection::class,
         SchemaBuilderInterface::class,
-        SchemaAssetsFilterBypassInterface::class,
         Repository\Repository::class,
         Repository\ContentService::class,
         Repository\ContentTypeService::class,
