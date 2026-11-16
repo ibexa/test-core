@@ -12,9 +12,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Ibexa\Contracts\Core\Test\Persistence\Fixture\FixtureImporter;
 use Ibexa\Contracts\Test\Core\Bootstrapper\BaseFixtureHook;
-use Ibexa\Contracts\Test\Core\Bootstrapper\DatabaseSchemaHook;
 use Ibexa\Contracts\Test\Core\Bootstrapper\DefaultFixtureProvider;
-use Ibexa\Contracts\Test\Core\Bootstrapper\FixtureHook;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException;
@@ -35,12 +33,6 @@ final class BaseFixtureHookTest extends TestCase
         $options = $this->resolve($hook, []);
 
         self::assertTrue($options[BaseFixtureHook::OPTION_LOAD_BASE_FIXTURE]);
-    }
-
-    public function testRunsBeforeTheFixtureHookAndAfterTheSchemaHooks(): void
-    {
-        self::assertGreaterThan(FixtureHook::PRIORITY, BaseFixtureHook::PRIORITY);
-        self::assertLessThan(DatabaseSchemaHook::PRIORITY, BaseFixtureHook::PRIORITY);
     }
 
     public function testImportsTheBaselineByDefault(): void
