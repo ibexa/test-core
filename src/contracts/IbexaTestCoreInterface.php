@@ -21,6 +21,9 @@ use Ibexa\Contracts\Core\Repository\SearchService;
 use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
+use Ibexa\Contracts\Core\Repository\Values\User\PolicyCreateStruct;
+use Ibexa\Contracts\Core\Repository\Values\User\User;
+use Ibexa\Contracts\Core\Repository\Values\User\UserReference;
 
 /**
  * @experimental
@@ -69,4 +72,26 @@ interface IbexaTestCoreInterface
     public function setAnonymousUser(): void;
 
     public function setAdministratorUser(): void;
+
+    public function setCurrentUser(UserReference $user): void;
+
+    /**
+     * Creates a user in the Users group with a new role holding only the given policies.
+     *
+     * @param list<PolicyCreateStruct> $policies
+     */
+    public function createUserWithPolicies(
+        string $login,
+        array $policies = []
+    ): User;
+
+    /**
+     * Creates a user like createUserWithPolicies() and makes it the current user.
+     *
+     * @param list<PolicyCreateStruct> $policies
+     */
+    public function setCurrentUserWithPolicies(
+        string $login,
+        array $policies = []
+    ): User;
 }
