@@ -16,11 +16,14 @@ use Ibexa\Contracts\Core\Repository\LanguageService;
 use Ibexa\Contracts\Core\Repository\LocationService;
 use Ibexa\Contracts\Core\Repository\ObjectStateService;
 use Ibexa\Contracts\Core\Repository\PermissionResolver;
+use Ibexa\Contracts\Core\Repository\Repository;
 use Ibexa\Contracts\Core\Repository\RoleService;
 use Ibexa\Contracts\Core\Repository\SearchService;
 use Ibexa\Contracts\Core\Repository\SectionService;
 use Ibexa\Contracts\Core\Repository\UserPreferenceService;
 use Ibexa\Contracts\Core\Repository\UserService;
+use Ibexa\Contracts\Core\Repository\Values\User\User;
+use Ibexa\Contracts\Core\Repository\Values\User\UserReference as APIUserReference;
 use Ibexa\Core\Repository\Values\User\UserReference;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -35,6 +38,9 @@ final class IbexaTestCore implements IbexaTestCoreInterface
 {
     public const int ANONYMOUS_USER_ID = 10;
     public const int ADMIN_USER_ID = 14;
+
+    private const int USERS_GROUP_ID = 4;
+    private const string LANGUAGE_CODE = 'eng-US';
 
     public function __construct(
         private readonly ContainerInterface $container
@@ -146,11 +152,61 @@ final class IbexaTestCore implements IbexaTestCoreInterface
 
     public function setAnonymousUser(): void
     {
-        $this->getPermissionResolver()->setCurrentUserReference(new UserReference(self::ANONYMOUS_USER_ID));
+        $this->setCurrentUser(new UserReference(self::ANONYMOUS_USER_ID));
     }
 
     public function setAdministratorUser(): void
     {
-        $this->getPermissionResolver()->setCurrentUserReference(new UserReference(self::ADMIN_USER_ID));
+        $this->setCurrentUser(new UserReference(self::ADMIN_USER_ID));
+    }
+
+    public function setCurrentUser(APIUserReference $user): void
+    {
+        $this->getPermissionResolver()->setCurrentUserReference($user);
+    }
+
+    public function createUserWithPolicies(
+        string $login,
+        array $policies = []
+    ): User {
+        return $this->getServiceByClassName(Repository::class)->sudo(
+            static function (Repository $repository) use ($login, $policies): User {
+                $userService = $repository->getUserService();
+                $roleService = $repository->getRoleService();
+
+                $userCreateStruct = $userService->newUserCreateStruct(
+                    $login,
+                    $login . '@example.com',
+                    'Passw0rd!123',
+                    self::LANGUAGE_CODE
+                );
+                $userCreateStruct->setField('first_name', $login);
+                $userCreateStruct->setField('last_name', $login);
+                $user = $userService->createUser(
+                    $userCreateStruct,
+                    [$userService->loadUserGroup(self::USERS_GROUP_ID)]
+                );
+
+                $roleIdentifier = 'Role of ' . $login;
+                $roleDraft = $roleService->createRole($roleService->newRoleCreateStruct($roleIdentifier));
+                foreach ($policies as $policy) {
+                    $roleDraft = $roleService->addPolicyByRoleDraft($roleDraft, $policy);
+                }
+                $roleService->publishRoleDraft($roleDraft);
+                $roleService->assignRoleToUser($roleService->loadRoleByIdentifier($roleIdentifier), $user);
+
+                return $user;
+            }
+        );
+    }
+
+    public function setCurrentUserWithPolicies(
+        string $login,
+        array $policies = []
+    ): User {
+        $user = $this->createUserWithPolicies($login, $policies);
+        $this->setCurrentUser($user);
+
+        return $user;
     }
 }
