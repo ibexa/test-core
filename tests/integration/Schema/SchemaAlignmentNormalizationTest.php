@@ -74,5 +74,6 @@ final class SchemaAlignmentNormalizationTest extends IbexaKernelTestCase
         yield 'INTEGER primary key without autoincrement' => ['alignment_integer_key', ['sqlite']];
         yield 'index prefix length' => ['alignment_prefix_length', ['mysql', 'postgresql', 'sqlite']];
         yield 'string longer than VARCHAR allows' => ['alignment_long_string', ['sqlite']];
+        yield 'datetimetz without a time zone type' => ['alignment_datetimetz', ['mysql', 'sqlite']];
     }
 }

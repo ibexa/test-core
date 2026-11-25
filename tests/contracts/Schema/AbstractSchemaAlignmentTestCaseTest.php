@@ -95,6 +95,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     {
         $mysql = static function (Schema $schema): void {
             self::setIndexLengths($schema->getTable('alignment_prefix_length'), 'alignment_prefix_length_name', [191]);
+            self::readBackAsDateTime($schema->getTable('alignment_datetimetz')->getColumn('created_at'));
         };
         yield 'MySQL' => [new MySQL80Platform(), self::createDatabaseSchema($mysql)];
         yield 'MariaDB' => [new MariaDb1027Platform(), self::createDatabaseSchema($mysql)];
@@ -110,6 +111,7 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
             $schema->getTable('alignment_composite_key')->getColumn('id')->setAutoincrement(false);
             $schema->getTable('alignment_integer_key')->getColumn('id')->setAutoincrement(true);
             self::readBackAsText($schema->getTable('alignment_long_string')->getColumn('description'));
+            self::readBackAsDateTime($schema->getTable('alignment_datetimetz')->getColumn('created_at'));
         };
         yield 'SQLite' => [new SqlitePlatform(), self::createDatabaseSchema($sqlite)];
     }
@@ -184,5 +186,10 @@ final class AbstractSchemaAlignmentTestCaseTest extends TestCase
     private static function readBackAsText(Column $column): void
     {
         $column->setType(Type::getType(Types::TEXT))->setLength(null);
+    }
+
+    private static function readBackAsDateTime(Column $column): void
+    {
+        $column->setType(Type::getType(Types::DATETIME_MUTABLE));
     }
 }

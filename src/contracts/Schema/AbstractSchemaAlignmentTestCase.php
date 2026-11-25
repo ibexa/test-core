@@ -17,6 +17,8 @@ use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Types\DateTimeTzImmutableType;
+use Doctrine\DBAL\Types\DateTimeTzType;
 use Doctrine\DBAL\Types\StringType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
@@ -122,6 +124,7 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
             foreach ($table->getColumns() as $column) {
                 self::ignoreAutoincrementOnSqlite($column, $platform);
                 self::treatOverlongStringAsText($column, $platform);
+                self::treatDateTimeTzAsDateTimeWithoutTimeZoneType($column, $platform);
             }
         }
     }
@@ -199,6 +202,25 @@ abstract class AbstractSchemaAlignmentTestCase extends IbexaKernelTestCase
 
         $column->setType(Type::getType(Types::TEXT));
         $column->setLength(null);
+    }
+
+    /**
+     * A datetimetz column is read back as a datetime one on platforms that declare both the same way.
+     */
+    private static function treatDateTimeTzAsDateTimeWithoutTimeZoneType(
+        Column $column,
+        AbstractPlatform $platform
+    ): void {
+        $type = $column->getType();
+        if (
+            !$type instanceof DateTimeTzType
+            || $type instanceof DateTimeTzImmutableType
+            || $platform->getDateTimeTzTypeDeclarationSQL([]) !== $platform->getDateTimeTypeDeclarationSQL([])
+        ) {
+            return;
+        }
+
+        $column->setType(Type::getType(Types::DATETIME_MUTABLE));
     }
 
     /**
